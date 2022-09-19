@@ -1,0 +1,33 @@
+version: '3.9'
+
+services:
+  backend:
+    build: ./backend
+    command: python /app/backend/manage.py runserver 0.0.0.0:8000 --noreload
+    volumes:
+      - ./backend:/app/backend
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    environment:
+      - "DJANGO_SECRET_KEY=django-insecure-eg7d=r5=!&-zfll#z!t*$e6e5e=d+7i4t495*_k_@^l-z+mpw)"
+      - "DJANGO_DEBUG=True"
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - "POSTGRES_HOST_AUTH_METHOD=trust"
+  frontend:
+    build: ./frontend
+    command: npm start
+    volumes: 
+      - ./frontend:/app/frontend
+    ports:
+      - 3000:3000
+
+volumes:
+  postgres_data:

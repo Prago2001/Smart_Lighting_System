@@ -1,0 +1,18 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+django = "*"
+digi-xbee = "*"
+psycopg2-binary = "*"
+environs = {extras = ["django"], version = "*"}
+django-cors-headers = "*"
+djangorestframework = "*"
+markdown = "*"
+
+[requires]
+python_version = "3.8"
