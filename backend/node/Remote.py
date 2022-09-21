@@ -21,3 +21,32 @@ class Remote(RemoteZigBeeDevice):
         for line in dim_lines:
             self.remote_device.set_io_configuration(line,IOMode.DIGITAL_OUT_LOW)
         self._64bit_addr = str(self.remote_device.get_64bit_addr())
+    
+    def __str__(self):
+        return self._64bit_addr
+
+    def get_mains_val(self):
+        if self.remote_device.get_dio_value(main_line) is on:
+            return True
+        else:
+            return False
+    
+
+    def get_dim_value(self):
+        if self.remote_device.get_dio_value(line_1) == on and self.remote_device.get_dio_value(line_2) == off and self.remote_device.get_dio_value(line_3) == off:
+            return 25
+        elif self.remote_device.get_dio_value(line_1) == on and self.remote_device.get_dio_value(line_2) == on and self.remote_device.get_dio_value(line_3) == off:
+            return 50
+        elif self.remote_device.get_dio_value(line_1) == on and self.remote_device.get_dio_value(line_2) == off and self.remote_device.get_dio_value(line_3) == on:
+            return 75
+        elif self.remote_device.get_dio_value(line_1) == on and self.remote_device.get_dio_value(line_2) == on and self.remote_device.get_dio_value(line_3) == on:
+            return 100
+    
+    def get_current_value(self):
+        return self.remote_device.get_adc_value(current)
+    
+    def get_temperature_value(self):
+        # t_val stands for actual temperature
+        t_val = self.remote_device.get_adc_value(temperature)
+        t_val = ((t_val * 1.2 / 1023) - 0.5) * 100
+        return t_val
