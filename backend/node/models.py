@@ -1,3 +1,22 @@
 from django.db import models
 
-# Create your models here.
+class Slave(models.Model):
+    unique_id = models.CharField(max_length=20,unique=True,primary_key=True)
+    is_active = models.BooleanField(default=True)
+    mains_val = models.BooleanField(default=False)
+    dim_val = models.IntegerField(default=25,choices=
+    [
+        (25,"25"),
+        (50,"50"),
+        (75,"75"),
+        (100,"100")
+    ])
+    temperature = models.FloatField(null=True)
+    current = models.FloatField(null=True)
+    # coordinator_id if needed
+
+    def __str__(self):
+        return self.unique_id
+        
+
+
