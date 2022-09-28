@@ -21,6 +21,7 @@ class Remote(RemoteZigBeeDevice):
         for line in dim_lines:
             self.remote_device.set_io_configuration(line,IOMode.DIGITAL_OUT_LOW)
         self._64bit_addr = str(self.remote_device.get_64bit_addr())
+        self.node_name = self.remote_device.get_node_id()
     
     def __str__(self):
         return self._64bit_addr
@@ -50,3 +51,23 @@ class Remote(RemoteZigBeeDevice):
         t_val = self.remote_device.get_adc_value(temperature)
         t_val = ((t_val * 1.2 / 1023) - 0.5) * 100
         return t_val
+    
+    def set_dim_25(self):
+        self.remote_device.set_dio_value(line_1,on)
+        self.remote_device.set_dio_value(line_2,off)
+        self.remote_device.set_dio_value(line_3,off)
+    
+    def set_dim_50(self):
+        self.remote_device.set_dio_value(line_1,on)
+        self.remote_device.set_dio_value(line_2,on)
+        self.remote_device.set_dio_value(line_3,off)
+    
+    def set_dim_75(self):
+        self.remote_device.set_dio_value(line_1,on)
+        self.remote_device.set_dio_value(line_2,off)
+        self.remote_device.set_dio_value(line_3,on)
+    
+    def set_dim_100(self):
+        self.remote_device.set_dio_value(line_1,on)
+        self.remote_device.set_dio_value(line_2,on)
+        self.remote_device.set_dio_value(line_3,on)
