@@ -18,7 +18,7 @@ class Slave(models.Model):
     # coordinator_id if needed
 
     def __str__(self):
-        return self.unique_id
+        return self.name
         
 
 
