@@ -3,6 +3,8 @@ from django.http import HttpResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from .models import Slave
+
 
 try:
     from .Coordinator import MASTER
@@ -13,13 +15,14 @@ except Exception as e:
 @api_view(['GET'])
 def get_nodes(request):
     data_list = []
-    for node in MASTER.nodes:
+    for node in Slave.objects.all():
         node_data = {
-            'id' : node._64bit_addr,
-            'relay' : False,
-            'dim' : 25,
-            'current' : 50,
-            'temp' : 30
+            'id' : node.name,
+            'relay' : node.mains_val,
+            'dim' : node.dim_val,
+            'current' : node.current,
+            'temp' : node.temperature,
+            'is_active' : node.is_active,
         }
         data_list.append(node_data)
     return Response({'nodes': data_list})
