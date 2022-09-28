@@ -2,6 +2,7 @@ from django.db import models
 
 class Slave(models.Model):
     unique_id = models.CharField(max_length=20,unique=True,primary_key=True)
+    name = models.CharField(max_length=255,unique=True)
     is_active = models.BooleanField(default=True)
     mains_val = models.BooleanField(default=False)
     dim_val = models.IntegerField(default=25,choices=
@@ -13,6 +14,7 @@ class Slave(models.Model):
     ])
     temperature = models.FloatField(null=True)
     current = models.FloatField(null=True)
+    last_modified = models.DateTimeField(auto_now=True)
     # coordinator_id if needed
 
     def __str__(self):
