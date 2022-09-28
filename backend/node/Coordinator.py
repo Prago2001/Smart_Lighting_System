@@ -29,5 +29,11 @@ class Coordinator(metaclass=Singleton):
             except:
                 pass
         return self.nodes
+    
+    def get_node(self,node_name:str):
+        node = self.network.discover_device(node_name)
+        return node
+    
+    
 
 MASTER = Coordinator()

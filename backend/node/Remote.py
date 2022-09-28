@@ -26,7 +26,7 @@ class Remote(RemoteZigBeeDevice):
     def __str__(self):
         return self._64bit_addr
 
-    def get_mains_val(self):
+    def get_mains_value(self):
         if self.remote_device.get_dio_value(main_line) is on:
             return True
         else:
