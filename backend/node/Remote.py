@@ -22,6 +22,7 @@ class Remote(RemoteZigBeeDevice):
             self.remote_device.set_io_configuration(line,IOMode.DIGITAL_OUT_LOW)
         self._64bit_addr = str(self.remote_device.get_64bit_addr())
         self.node_name = self.remote_device.get_node_id()
+        
     
     def __str__(self):
         return self._64bit_addr
@@ -42,6 +43,8 @@ class Remote(RemoteZigBeeDevice):
             return 75
         elif self.remote_device.get_dio_value(line_1) == on and self.remote_device.get_dio_value(line_2) == on and self.remote_device.get_dio_value(line_3) == on:
             return 100
+        else:
+            return 0
     
     def get_current_value(self):
         return self.remote_device.get_adc_value(current)
@@ -71,3 +74,6 @@ class Remote(RemoteZigBeeDevice):
         self.remote_device.set_dio_value(line_1,on)
         self.remote_device.set_dio_value(line_2,on)
         self.remote_device.set_dio_value(line_3,on)
+    
+    def set_node_id(self, node_id):
+        self.remote_device.set_node_id(node_id)

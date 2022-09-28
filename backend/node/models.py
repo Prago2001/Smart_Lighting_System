@@ -6,7 +6,8 @@ class Slave(models.Model):
     is_active = models.BooleanField(default=True)
     mains_val = models.BooleanField(default=False)
     dim_val = models.IntegerField(default=25,choices=
-    [
+    [   
+        (0,"0"),
         (25,"25"),
         (50,"50"),
         (75,"75"),
