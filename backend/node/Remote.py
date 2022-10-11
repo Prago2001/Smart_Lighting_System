@@ -15,11 +15,13 @@ off = IOValue.LOW
 class Remote(RemoteZigBeeDevice):
     def __init__(self,node:RemoteZigBeeDevice):
         self.remote_device = node
-        self.remote_device.set_io_configuration(temperature,IOMode.ADC)
-        self.remote_device.set_io_configuration(current,IOMode.ADC)
-        self.remote_device.set_io_configuration(main_line,IOMode.DIGITAL_OUT_LOW)
-        for line in dim_lines:
-            self.remote_device.set_io_configuration(line,IOMode.DIGITAL_OUT_LOW)
+
+        # self.remote_device.set_io_configuration(temperature,IOMode.ADC)
+        # self.remote_device.set_io_configuration(current,IOMode.ADC)
+        # self.remote_device.set_io_configuration(main_line,IOMode.DIGITAL_OUT_LOW)
+        # for line in dim_lines:
+        #     self.remote_device.set_io_configuration(line,IOMode.DIGITAL_OUT_LOW)
+
         self._64bit_addr = str(self.remote_device.get_64bit_addr())
         self.node_name = self.remote_device.get_node_id()
         
@@ -32,6 +34,12 @@ class Remote(RemoteZigBeeDevice):
             return True
         else:
             return False
+    
+    def set_mains_value(self,switch_on : bool):
+        if switch_on is True:
+            self.remote_device.set_dio_value(main_line,on)
+        else:
+            self.remote_device.set_dio_value(main_line,off)
     
 
     def get_dim_value(self):
@@ -75,5 +83,17 @@ class Remote(RemoteZigBeeDevice):
         self.remote_device.set_dio_value(line_2,on)
         self.remote_device.set_dio_value(line_3,on)
     
+
+    def set_dim_value(self,value:int):
+        if value == 25:
+            self.set_dim_25()
+        elif value == 50:
+            self.set_dim_50()
+        elif value == 75:
+            self.set_dim_75()
+        elif value == 100:
+            self.set_dim_100()
+    
     def set_node_id(self, node_id):
         self.remote_device.set_node_id(node_id)
+    
