@@ -32,7 +32,10 @@ class Coordinator(metaclass=Singleton):
     
     def get_node(self,node_name:str):
         node = self.network.discover_device(node_name)
-        return node
+        if node is None:
+            return None
+        else:
+            return Remote(node=node)
     
     
 
