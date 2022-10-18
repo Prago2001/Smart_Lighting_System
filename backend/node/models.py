@@ -1,3 +1,4 @@
+from email.policy import default
 from django.db import models
 
 class Slave(models.Model):
@@ -20,6 +21,38 @@ class Slave(models.Model):
 
     def __str__(self):
         return self.name
-        
 
 
+class Schedule(models.Model):
+    schedule_id = models.IntegerField(primary_key=True)
+    schedule_name = models.CharField(max_length = 100)
+    current = models.BooleanField(default = False)
+
+    def __str__(self):
+        return self.schedule_name
+
+
+class Slot(models.Model):
+    start = models.TimeField()
+    end = models.TimeField()
+    intensity = models.IntegerField(default=25,choices=
+    [   
+        (0,"0"),
+        (25,"25"),
+        (50,"50"),
+        (75,"75"),
+        (100,"100")
+    ])
+    schedule = models.ForeignKey(Schedule,on_delete = models.CASCADE)
+
+
+'''
+import datetime
+  
+# time(hour = 0, minute = 0, second = 0)
+d = datetime.time(10, 33, 45)
+
+geek_object = GeeksModel.objects.create(geeks_field = d)
+geek_object.save()
+
+'''
