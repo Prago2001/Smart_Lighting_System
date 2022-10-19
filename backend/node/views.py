@@ -48,6 +48,7 @@ def discover_remote_nodes(request):
             node.is_active = False
             node.save()
         else:
+            node.is_active = True
             node.current = remote.get_current_value()
             node.temperature = remote.get_temperature_value()
             node.save()
@@ -79,6 +80,7 @@ def toggle_mains(request):
             if remote is None:
                 node.is_active = False
             else:
+                node.is_active = True
                 remote.set_mains_value(switch_mains_value)
             
             node.mains_val = switch_mains_value
@@ -100,6 +102,7 @@ def toggle_mains(request):
             node.save()
             return Response({"message":f"Node {node.name} is inactive"})
         else:
+            node.is_active = True
             remote.set_mains_value(switch_mains_value)
             node.mains_val = switch_mains_value
             node.save()
@@ -117,6 +120,7 @@ def dim_to(request):
             if remote is None:
                 node.is_active = False
             else:
+                node.is_active = True
                 remote.set_dim_value(dim_to_value)
             
             node.dim_val = dim_to_value
@@ -134,6 +138,7 @@ def dim_to(request):
             node.save()
             return Response({"message":f"Node {node.name} is inactive"})
         else:
+            node.is_active = True
             remote.set_dim_value(dim_to_value)
             node.dim_val = dim_to_value
             node.save()

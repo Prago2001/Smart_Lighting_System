@@ -13,6 +13,8 @@ environs = {extras = ["django"], version = "*"}
 django-cors-headers = "*"
 djangorestframework = "*"
 markdown = "*"
+apscheduler = "*"
+astral = "*"
 
 [requires]
 python_version = "3.8"

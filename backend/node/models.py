@@ -26,7 +26,7 @@ class Slave(models.Model):
 class Schedule(models.Model):
     schedule_id = models.IntegerField(primary_key=True)
     schedule_name = models.CharField(max_length = 100)
-    current = models.BooleanField(default = False)
+    currently_active = models.BooleanField(default = False)
 
     def __str__(self):
         return self.schedule_name
@@ -44,6 +44,9 @@ class Slot(models.Model):
         (100,"100")
     ])
     schedule = models.ForeignKey(Schedule,on_delete = models.CASCADE)
+
+    def __str__(self):
+        return f"{self.schedule}-{self.id}"
 
 
 '''
