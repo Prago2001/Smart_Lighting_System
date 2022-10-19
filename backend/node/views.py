@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from .models import Slave
+from .models import Slave,Schedule,Slot
 
 
 try:
@@ -143,3 +143,19 @@ def dim_to(request):
             node.dim_val = dim_to_value
             node.save()
     return Response({"message":"Success"})
+
+
+
+@api_view(['GET'])
+def getSchedule(request):
+    current_schedule = Schedule.objects.get(currently_active=True)
+    data = {'schedule':[]}
+    for row in Slot.objects.filter(schedule=current_schedule):
+        data['schedule'].append(
+            {
+                'from':row.start.strftime("%I:%M %p").lower(),
+                'to': row.end.strftime("%I:%M %p").lower(),
+                'i': row.intensity
+            }
+        )
+    return Response(data)

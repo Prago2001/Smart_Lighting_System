@@ -7,4 +7,5 @@ urlpatterns = [
     path('discover/',views.discover_remote_nodes),
     path('toggle/', views.toggle_mains),
     path('dimming/', views.dim_to),
+    path('getSchedule/',views.getSchedule)
 ]
