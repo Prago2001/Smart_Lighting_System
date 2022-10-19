@@ -1,6 +1,8 @@
 from time import sleep
 from typing import List, Set
 from digi.xbee.devices import ZigBeeDevice
+
+from backend.node.models import Slave
 from .Remote import Remote
 
 class Singleton(type):
@@ -16,6 +18,8 @@ class Coordinator(metaclass=Singleton):
         self.master = ZigBeeDevice("/dev/ttyUSB0",9600)
         self.master.open()
         self.network = self.master.get_network()
+        self.SunRise = None
+        self.SunSet = None
 
     def discover_nodes(self) -> List[Remote]:
         self.nodes : List[Remote] = []
@@ -37,6 +41,77 @@ class Coordinator(metaclass=Singleton):
         else:
             return Remote(node=node)
     
+    def make_all_on(self):
+
+        for node in Slave.objects.all():
+            remote = self.get_node(node.name)
+            if remote is None:
+                node.is_active = False
+            else:
+                node.is_active = True
+                remote.set_mains_value(True)
+            node.mains_val = True
+            node.save()
     
+    def make_all_off(self):
+
+        for node in Slave.objects.all():
+            remote = self.get_node(node.name)
+            if remote is None:
+                node.is_active = False
+            else:
+                node.is_active = True
+                remote.set_mains_value(False)
+            node.mains_val = False
+            node.save()
+
+    def set_dim_25(self):
+        for node in Slave.objects.all():
+            remote = self.get_node(node.name)
+            if remote is None:
+                node.is_active = False
+            else:
+                node.is_active = True
+                remote.set_dim_value(25)
+            
+            node.dim_val = 25
+            node.save()
+
+
+    def set_dim_50(self):
+        for node in Slave.objects.all():
+            remote = self.get_node(node.name)
+            if remote is None:
+                node.is_active = False
+            else:
+                node.is_active = True
+                remote.set_dim_value(50)
+
+            node.dim_val = 50
+            node.save()
+        
+    def set_dim_75(self):
+        for node in Slave.objects.all():
+            remote = self.get_node(node.name)
+            if remote is None:
+                node.is_active = False
+            else:
+                node.is_active = True
+                remote.set_dim_value(75)
+            
+            node.dim_val = 75
+            node.save()
+
+    def set_dim_100(self):
+        for node in Slave.objects.all():
+            remote = self.get_node(node.name)
+            if remote is None:
+                node.is_active = False
+            else:
+                node.is_active = True
+                remote.set_dim_value(100)
+
+            node.dim_val = 100
+            node.save()
 
 MASTER = Coordinator()
