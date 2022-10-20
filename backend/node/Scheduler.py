@@ -3,11 +3,37 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from astral import LocationInfo
 from astral.sun import sun
 from .Coordinator import MASTER, Coordinator
-from .models import Schedule, Slot
+from .models import Schedule, Slot, CurrentMeasurement, TemperatureMeasurement,Slave
 
 scheduler = BackgroundScheduler()
 
 # in startup :
+
+def getInsValues():
+    for node in Slave.objects.all():
+        remote = MASTER.get_node(node.name)
+
+        if remote is None:
+            node.is_active = False
+        else:
+            node.is_active = True
+            temp = remote.get_temperature_value() 
+            curr = remote.get_current_value()
+
+            curr = curr - 447
+            if 150 > curr > 50:
+                curr = curr * 2.93
+            elif 250 > curr > 150:
+                curr = curr * 2.44
+            elif 350 > curr > 250:
+                curr = curr * 2.27
+            else:
+                curr = curr * 2.3
+            temp = ((temp * 1.2 / 1023) - 0.5) * 100
+            CurrentMeasurement.objects.create(SlaveId = node,currentValue = curr)
+            TemperatureMeasurement.objects.create(SlaveId = node,temperatureValue = temp)
+
+        node.save()
 
 def fetchSunModel() :
 
@@ -46,6 +72,6 @@ def fetchSunModel() :
 
 def updater_start():
 
-    # scheduler.add_job(getInsValue, 'interval', seconds=30, id='inst_values')
+    scheduler.add_job(lambda : getInsValues(), 'interval', seconds=60, id='inst_values')
     scheduler.add_job(lambda : fetchSunModel(), 'cron', id='sunmodel', hour=0, minute=15, timezone='Asia/Kolkata')
     scheduler.start()

@@ -10,7 +10,7 @@ from dateutil import parser
 import datetime
 
 
-from .models import Schedule, Slave, Slot
+from .models import CurrentMeasurement, Schedule, Slave, Slot, TemperatureMeasurement
 
 try:
     from .Coordinator import MASTER
@@ -250,3 +250,48 @@ def syncToSchedule(request):
     else:
         MASTER.make_all_off()
     return Response({"message":"Success"})
+
+@api_view(['GET'])
+def getInstValues(request):
+    list = []
+    for node in Slave.objects.all():
+        
+        data = {
+            'id' : node.name,
+            'current' : CurrentMeasurement.objects.get(SlaveId=node).currentValue,
+            'temperature' : TemperatureMeasurement.objects.get(SlaveId=node).temperatureValue
+        }
+
+        list.append(data)
+
+    return Response({'data':data})
+
+@api_view(['GET'])
+def getGraphValues(request):
+    id = request.GET.get('id')
+    modelNode = Slave.objects.get(name=id)
+
+    i = 9
+
+    curr = []
+    temp = []
+    for node in CurrentMeasurement.objects.filter(SlaveId=modelNode).order_by('-dateTimeStamp')[:10]:
+        curr.append([i, node.currentValue])
+        i -= 1
+    
+    i=9
+
+    for node in TemperatureMeasurement.objects.filter(SlaveId=modelNode).order_by('-dateTimeStamp')[:10]:
+        temp.append([i, node.temperatureValue])
+        i -= 1
+
+    curr.append(["x", "current"])
+    temp.append(["x", "temperature"])
+
+    curr = curr[::-1]
+    temp = temp[::-1]
+
+    return Response({'curr': curr, 'temp': temp})
+
+
+

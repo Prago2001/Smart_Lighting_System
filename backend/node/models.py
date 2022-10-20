@@ -48,7 +48,15 @@ class Slot(models.Model):
     def __str__(self):
         return f"{self.schedule}-{self.id}"
 
+class CurrentMeasurement(models.Model):
+    SlaveId = models.ForeignKey(Slave,on_delete = models.CASCADE)
+    dateTimeStamp = models.DateTimeField(auto_now_add = True)
+    currentValue = models.FloatField()
 
+class TemperatureMeasurement(models.Model):
+    SlaveId = models.ForeignKey(Slave,on_delete = models.CASCADE)
+    dateTimeStamp = models.DateTimeField(auto_now_add = True)
+    temperatureValue = models.FloatField()
 '''
 import datetime
   
