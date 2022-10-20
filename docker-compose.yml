@@ -3,7 +3,7 @@ version: '3.9'
 services:
   backend:
     build: ./backend
-    command: python /app/backend/manage.py runserver 0.0.0.0:8000 --noreload
+    command: python /app/backend/manage.py runserver 0.0.0.0:8000 --noreload --settings=backend.settings.dev
     volumes:
       - ./backend:/app/backend
     ports:

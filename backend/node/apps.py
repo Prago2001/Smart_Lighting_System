@@ -11,7 +11,8 @@ class NodeConfig(AppConfig):
             from .Coordinator import MASTER
             from .models import Slave,Schedule,Slot
             import datetime
-            from .Scheduler import fetchSunModel,updater_start
+            from .Scheduler import fetchSunModel,updater_start,add_dim_jobs_on_startup,sync_to_schedule
+            from .views import changeSchedule
             # Slave.objects.all().delete()
             # counter = Slave.objects.count()+1
             for node in MASTER.discover_nodes():
@@ -74,6 +75,11 @@ class NodeConfig(AppConfig):
 
             fetchSunModel()
             updater_start()
+            add_dim_jobs_on_startup()
+            sync_to_schedule()
+            # print(scheduler.get_jobs())
+            
+
             # Something to do with current_schedule
 
         except Exception as e:

@@ -2,8 +2,13 @@ import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from astral import LocationInfo
 from astral.sun import sun
-from .Coordinator import MASTER, Coordinator
 from .models import Schedule, Slot, CurrentMeasurement, TemperatureMeasurement,Slave
+
+
+try:
+    from .Coordinator import MASTER
+except Exception as e:
+    pass
 
 scheduler = BackgroundScheduler()
 
@@ -75,3 +80,55 @@ def updater_start():
     scheduler.add_job(lambda : getInsValues(), 'interval', seconds=60, id='inst_values')
     scheduler.add_job(lambda : fetchSunModel(), 'cron', id='sunmodel', hour=0, minute=15, timezone='Asia/Kolkata')
     scheduler.start()
+
+
+
+def add_dim_jobs_on_startup():
+    current_active_schedule = Schedule.objects.get(currently_active=True)
+    slots = Slot.objects.filter(schedule=current_active_schedule).order_by('id')
+    job_count = 0
+    for slot in slots:
+        current_job = scheduler.get_job(f'dim_{job_count}')
+        if current_job is None:
+            scheduler.add_job(
+                lambda : MASTER.set_dim_value(slot.intensity),
+                'cron',
+                id = f'dim_{job_count}',
+                hour = slot.start.hour,
+                minute = slot.start.minute,
+                timezone = 'Asia/Kolkata'
+            )
+        else:
+            current_job.remove()
+            scheduler.add_job(
+                lambda : MASTER.set_dim_value(slot.intensity),
+                'cron',
+                id = f'dim_{job_count}',
+                hour = slot.start.hour,
+                minute = slot.start.minute,
+                timezone = 'Asia/Kolkata'
+            )
+        job_count += 1
+
+
+def sync_to_schedule():
+    current_time = datetime.datetime.now().strftime("%H:%M")
+    sunset = MASTER.SunSet
+    sunrise = MASTER.SunRise
+
+    if current_time >= sunset or current_time < sunrise:
+        MASTER.make_all_on()
+        current_schedule = Schedule.objects.get(currently_active = True)
+        slots = Slot.objects.filter(schedule=current_schedule).order_by('id')
+
+        for slot in slots:
+            start = slot.start.strftime("%H:%M")
+            end = slot.end.strftime("%H:%M")
+            if start < end:
+                if start <= current_time < end:
+                    MASTER.set_dim_value(slot.intensity)
+            else:
+                if current_time >= start or current_time < end:
+                    MASTER.set_dim_value(slot.intensity)
+    else:
+        MASTER.make_all_off()
