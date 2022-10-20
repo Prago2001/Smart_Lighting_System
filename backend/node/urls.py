@@ -9,4 +9,5 @@ urlpatterns = [
     path('dimming/', views.dim_to),
     path('getSchedule/',views.getSchedule),
     path('setSchedule/', views.changeSchedule),
+    path('sync/',views.syncToSchedule)
 ]

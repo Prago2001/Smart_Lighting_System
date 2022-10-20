@@ -225,3 +225,28 @@ def changeSchedule(request):
         check_row += 1
         job_count += 1
     return Response({"message" : "Success"})
+
+
+@api_view(['GET','POST'])
+def syncToSchedule(request):
+    current_time = datetime.datetime.now().strftime("%H:%M")
+    sunset = MASTER.SunSet
+    sunrise = MASTER.SunRise
+
+    if current_time >= sunset or current_time < sunrise:
+        MASTER.make_all_on()
+        current_schedule = Schedule.objects.get(currently_active = True)
+        slots = Slot.objects.filter(schedule=current_schedule).order_by('id')
+
+        for slot in slots:
+            start = slot.start.strftime("%H:%M")
+            end = slot.end.strftime("%H:%M")
+            if start < end:
+                if start <= current_time < end:
+                    MASTER.set_dim_value(slot.intensity)
+            else:
+                if current_time >= start or current_time < end:
+                    MASTER.set_dim_value(slot.intensity)
+    else:
+        MASTER.make_all_off()
+    return Response({"message":"Success"})
