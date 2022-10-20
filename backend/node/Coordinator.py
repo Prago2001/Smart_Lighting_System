@@ -2,7 +2,7 @@ from time import sleep
 from typing import List, Set
 from digi.xbee.devices import ZigBeeDevice
 
-from backend.node.models import Slave
+from .models import Slave
 from .Remote import Remote
 
 class Singleton(type):
@@ -113,5 +113,15 @@ class Coordinator(metaclass=Singleton):
 
             node.dim_val = 100
             node.save()
+    
+    def set_dim_value(self,dim_value):
+        if dim_value == 25:
+            self.set_dim_25()
+        elif dim_value == 50:
+            self.set_dim_50()
+        elif dim_value == 75:
+            self.set_dim_75()
+        elif dim_value == 100:
+            self.set_dim_100()
 
 MASTER = Coordinator()
