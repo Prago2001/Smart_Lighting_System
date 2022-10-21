@@ -1,0 +1,12 @@
+[Service]
+Restart=always
+WorkingDirectory=/home/pi/Smart_Lighting_System/backend
+ExecStart=python3 /home/pi/Smart_Lighting_System/backend/manage.py runserver 0.0.0.0:8000 --noreload --settings=backend.settings.prod
+StandardOutput=console
+StandardError=console
+SyslogIdentifier=backend
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
