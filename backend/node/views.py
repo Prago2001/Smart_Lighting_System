@@ -1,12 +1,11 @@
 import json
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .Scheduler import fetchSunModel, scheduler
+from .Scheduler import fetchSunModel, scheduler, function_mapping
 import pytz
 from dateutil import parser
 # from datetime import date, datetime
 import datetime
-
 
 from .models import CurrentMeasurement, Schedule, Slave, Slot, TemperatureMeasurement
 
@@ -181,14 +180,9 @@ def changeSchedule(request):
 
     current_active_schedule = Schedule.objects.get(currently_active=True)
     slots = Slot.objects.filter(schedule=current_active_schedule).order_by('id')
-    job_count = 0
-    check_row = 0
-
-    while check_row < 4:
-        new_row = schedule[check_row]
-        db_slot = slots[check_row]
-
-        # print(db_slot.__str__())
+    row = 0
+    for db_slot in slots:
+        new_row = schedule[row]
 
         new_start = parser.isoparse(new_row['from']).astimezone(pytz.timezone('Asia/Kolkata'))
         new_end = parser.isoparse(new_row['to']).astimezone(pytz.timezone('Asia/Kolkata'))
@@ -197,31 +191,21 @@ def changeSchedule(request):
         db_slot.start = new_start
         db_slot.end = new_end
         db_slot.intensity = new_intensity
-
-        current_job = scheduler.get_job(f'dim_{job_count}')
-
-        if current_job is None:
-            scheduler.add_job(
-                lambda : MASTER.set_dim_value(new_intensity),
-                'cron',
-                id = f'dim_{job_count}',
-                hour = new_start.hour,
-                minute = new_start.minute,
-                timezone = 'Asia/Kolkata'
-            )
-        else:
-            current_job.remove()
-            scheduler.add_job(
-                lambda : MASTER.set_dim_value(new_intensity),
-                'cron',
-                id = f'dim_{job_count}',
-                hour = new_start.hour,
-                minute = new_start.minute,
-                timezone = 'Asia/Kolkata'
-            )
         db_slot.save()
-        check_row += 1
-        job_count += 1
+        scheduler.add_job(
+                    function_mapping['set_dim_to'],
+                    args=[db_slot.intensity],
+                    trigger='cron',
+                    id = db_slot.__str__(),
+                    hour = db_slot.start.hour,
+                    minute = db_slot.start.minute,
+                    timezone = 'Asia/Kolkata',
+                    replace_existing=True,
+                    name='dimming_job'
+                )
+        row += 1
+    for job in scheduler.get_jobs():
+        print("name: %s, trigger: %s, next run: %s, handler: %s" % (job.name, job.trigger, job.next_run_time, job.func))
     return Response({"message" : "Success"})
 
 

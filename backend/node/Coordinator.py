@@ -115,6 +115,7 @@ class Coordinator(metaclass=Singleton):
             node.save()
     
     def set_dim_value(self,dim_value):
+        print("Dim Value - Scheduler: ",dim_value)
         if dim_value == 25:
             self.set_dim_25()
         elif dim_value == 50:

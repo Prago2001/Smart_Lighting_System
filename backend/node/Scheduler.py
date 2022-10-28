@@ -10,6 +10,12 @@ try:
 except Exception as e:
     pass
 
+function_mapping = {
+    'set_dim_to' : MASTER.set_dim_value,
+    'make_all_on' : MASTER.make_all_on,
+    'make_all_off':MASTER.make_all_off,
+}
+
 scheduler = BackgroundScheduler()
 
 # in startup :
@@ -37,6 +43,8 @@ def getInsValues():
             temp = ((temp * 1.2 / 1023) - 0.5) * 100
             CurrentMeasurement.objects.create(SlaveId = node,currentValue = curr)
             TemperatureMeasurement.objects.create(SlaveId = node,temperatureValue = temp)
+            node.current = curr
+            node.temperature = temp
 
         node.save()
 
@@ -63,12 +71,12 @@ def fetchSunModel() :
 
     j = scheduler.get_job('sunset')
     if j is None:
-        scheduler.add_job(lambda : MASTER.make_all_on(), 'cron', id='sunset', hour=s["sunset"].hour, minute=s["sunset"].minute, timezone='Asia/Kolkata')
+        scheduler.add_job(function_mapping['make_all_on'], 'cron', id='sunset', hour=s["sunset"].hour, minute=s["sunset"].minute, timezone='Asia/Kolkata')
     else:
         j.reschedule('cron', hour=s["sunset"].hour, minute=s["sunset"].minute, timezone='Asia/Kolkata')
     j = scheduler.get_job('sunrise')
     if j is None:
-        scheduler.add_job(lambda : MASTER.make_all_off(), 'cron', id='sunrise',  hour=s["sunrise"].hour, minute=s["sunrise"].minute, timezone='Asia/Kolkata')
+        scheduler.add_job(function_mapping['make_all_off'], 'cron', id='sunrise',  hour=s["sunrise"].hour, minute=s["sunrise"].minute, timezone='Asia/Kolkata')
     else:
         j.reschedule('cron', hour=s["sunrise"].hour, minute=s["sunrise"].minute, timezone='Asia/Kolkata')
 
@@ -77,8 +85,8 @@ def fetchSunModel() :
 
 def updater_start():
 
-    scheduler.add_job(lambda : getInsValues(), 'interval', seconds=60, id='inst_values')
-    scheduler.add_job(lambda : fetchSunModel(), 'cron', id='sunmodel', hour=0, minute=15, timezone='Asia/Kolkata')
+    scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values')
+    scheduler.add_job(fetchSunModel, 'cron', id='sunmodel', hour=0, minute=15, timezone='Asia/Kolkata',name='sunrise_sunset_values')
     scheduler.start()
 
 
@@ -87,28 +95,23 @@ def add_dim_jobs_on_startup():
     current_active_schedule = Schedule.objects.get(currently_active=True)
     slots = Slot.objects.filter(schedule=current_active_schedule).order_by('id')
     job_count = 0
-    for slot in slots:
-        current_job = scheduler.get_job(f'dim_{job_count}')
-        if current_job is None:
+    try:
+        for slot in slots:
             scheduler.add_job(
-                lambda : MASTER.set_dim_value(slot.intensity),
-                'cron',
-                id = f'dim_{job_count}',
-                hour = slot.start.hour,
-                minute = slot.start.minute,
-                timezone = 'Asia/Kolkata'
-            )
-        else:
-            current_job.remove()
-            scheduler.add_job(
-                lambda : MASTER.set_dim_value(slot.intensity),
-                'cron',
-                id = f'dim_{job_count}',
-                hour = slot.start.hour,
-                minute = slot.start.minute,
-                timezone = 'Asia/Kolkata'
-            )
-        job_count += 1
+                    function_mapping['set_dim_to'],
+                    args=[slot.intensity],
+                    trigger='cron',
+                    id = slot.__str__(),
+                    hour = slot.start.hour,
+                    minute = slot.start.minute,
+                    timezone = 'Asia/Kolkata',
+                    replace_existing=True,
+                    name='dimming_job'
+                )
+    except Exception as e:
+        print(e)
+    for job in scheduler.get_jobs():
+        print("name: %s, trigger: %s, next run: %s, handler: %s" % (job.name, job.trigger, job.next_run_time, job.func))
 
 
 def sync_to_schedule():
