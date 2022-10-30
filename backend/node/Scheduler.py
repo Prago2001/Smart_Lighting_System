@@ -27,6 +27,12 @@ def getInsValues():
         if remote is None:
             node.is_active = False
         else:
+            # If is_active of node is False
+            # and communication re-ocurs then
+            # setting it to current mains value and dim value 
+            if node.is_active is False:
+                remote.set_mains_value(node.mains_val)
+                remote.set_dim_value(node.dim_val)
             node.is_active = True
             temp = remote.get_temperature_value() 
             curr = remote.get_current_value()
