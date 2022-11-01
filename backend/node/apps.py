@@ -11,7 +11,7 @@ class NodeConfig(AppConfig):
             from .Coordinator import MASTER
             from .models import Slave,Schedule,Slot
             import datetime
-            from .Scheduler import fetchSunModel,updater_start,add_dim_jobs_on_startup,sync_to_schedule
+            from .Scheduler import fetchSunModel,updater_start,add_dim_jobs_on_startup,sync_to_schedule,add_sync_jobs
             from .views import changeSchedule
             # Slave.objects.all().delete()
             # counter = Slave.objects.count()+1
@@ -77,6 +77,7 @@ class NodeConfig(AppConfig):
             sync_to_schedule()
             updater_start()
             add_dim_jobs_on_startup()
+            add_sync_jobs()
             
             # print(scheduler.get_jobs())
             

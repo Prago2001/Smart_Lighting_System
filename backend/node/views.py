@@ -1,7 +1,7 @@
 import json
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .Scheduler import fetchSunModel, scheduler, function_mapping
+from .Scheduler import fetchSunModel, scheduler, function_mapping, sync_to_schedule
 import pytz
 from dateutil import parser
 # from datetime import date, datetime
@@ -202,6 +202,17 @@ def changeSchedule(request):
                     timezone = 'Asia/Kolkata',
                     replace_existing=True,
                     name='dimming_job'
+                )
+        id = "sync_" + db_slot.__str__()
+        scheduler.add_job(
+                    sync_to_schedule,
+                    trigger='cron',
+                    id = id,
+                    hour = db_slot.start.hour,
+                    minute = db_slot.start.minute + 1,
+                    timezone = 'Asia/Kolkata',
+                    replace_existing=True,
+                    name='sync_auto'
                 )
         row += 1
     for job in scheduler.get_jobs():

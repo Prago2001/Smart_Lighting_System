@@ -85,6 +85,20 @@ def fetchSunModel() :
         scheduler.add_job(function_mapping['make_all_off'], 'cron', id='sunrise',  hour=s["sunrise"].hour, minute=s["sunrise"].minute, timezone='Asia/Kolkata')
     else:
         j.reschedule('cron', hour=s["sunrise"].hour, minute=s["sunrise"].minute, timezone='Asia/Kolkata')
+    
+
+    # separate backup (sync with auto job) at sunrise
+    scheduler.add_job(
+                    sync_to_schedule,
+                    trigger='cron',
+                    id = "sync_sunset",
+                    hour = s['sunrise'].hour,
+                    minute = s['sunrise'].minute,
+                    second = 50,
+                    timezone = 'Asia/Kolkata',
+                    replace_existing=True,
+                    name='sync_auto'
+                )
 
 
 
@@ -116,8 +130,7 @@ def add_dim_jobs_on_startup():
                 )
     except Exception as e:
         print(e)
-    for job in scheduler.get_jobs():
-        print("name: %s, trigger: %s, next run: %s, handler: %s" % (job.name, job.trigger, job.next_run_time, job.func))
+    
 
 
 def sync_to_schedule():
@@ -141,3 +154,23 @@ def sync_to_schedule():
                     MASTER.set_dim_value(slot.intensity)
     else:
         MASTER.make_all_off()
+
+
+def add_sync_jobs():
+    current_active_schedule = Schedule.objects.get(currently_active=True)
+    slots = Slot.objects.filter(schedule=current_active_schedule).order_by('id')
+    for slot in slots:
+        id = "sync_" + slot.__str__()
+        scheduler.add_job(
+                    sync_to_schedule,
+                    trigger='cron',
+                    id = id,
+                    hour = slot.start.hour,
+                    minute = slot.start.minute,
+                    second = 50,
+                    timezone = 'Asia/Kolkata',
+                    replace_existing=True,
+                    name='sync_auto'
+                )
+    for job in scheduler.get_jobs():
+        print("name: %s, trigger: %s, next run: %s, handler: %s" % (job.name, job.trigger, job.next_run_time, job.func))
