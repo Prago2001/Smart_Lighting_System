@@ -107,6 +107,14 @@ def updater_start():
 
     scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values')
     scheduler.add_job(fetchSunModel, 'cron', id='sunmodel', hour=0, minute=15, timezone='Asia/Kolkata',name='sunrise_sunset_values')
+    scheduler.add_job(
+        sync_to_schedule,
+        trigger='interval',
+        minutes=30,
+        id='sync_to_auto',
+        name='sync_every_half_hour',
+        timezone='Asia/Kolkata'
+    )
     scheduler.start()
 
 
