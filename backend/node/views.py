@@ -6,7 +6,6 @@ import pytz
 from dateutil import parser
 # from datetime import date, datetime
 import datetime
-
 from .models import CurrentMeasurement, Schedule, Slave, Slot, TemperatureMeasurement
 
 try:
@@ -67,84 +66,107 @@ def discover_remote_nodes(request):
         data_list.append(node_data)
     return Response({'nodes':data_list})
 
-@api_view(['GET','POST'])
+@api_view(['GET','POST','PUT'])
 def toggle_mains(request):
-    if request.GET.get('isGlobal'):
-        status = request.GET.get("status")
-
-        if status == "on":
-            switch_mains_value = True
-        else:
-            switch_mains_value = False
-
-
+    print(request.method)
+    if request.method == "GET":
+        data_list = []
+        toggle_status = []
         for node in Slave.objects.all():
-            remote = MASTER.get_node(node.name)
+            toggle_status.append(node.mains_val)
+        if all(toggle_status) is True:
+            return Response({'relay': True})
+        else:
+            return Response({'relay': False})
+    elif request.method == "PUT":
+        request_data = json.loads(request.body)
+        params = request_data['params']
+        if 'isGlobal' in params and params['isGlobal'] is True:
+            status = params['status']
+
+            if status == "on":
+                switch_mains_value = True
+            else:
+                switch_mains_value = False
+
+
+            for node in Slave.objects.all():
+                remote = MASTER.get_node(node.name)
+                if remote is None:
+                    node.is_active = False
+                else:
+                    node.is_active = True
+                    remote.set_mains_value(switch_mains_value)
+                
+                node.mains_val = switch_mains_value
+                node.save()
+        else:
+            id = params['id']
+            status = params['status']
+
+            if status == "on":
+                switch_mains_value = True
+            else:
+                switch_mains_value = False
+
+            remote = MASTER.get_node(id)
+            node = Slave.objects.get(name=id)
             if remote is None:
                 node.is_active = False
+                node.mains_val = switch_mains_value
+                node.save()
+                return Response({"message":f"Node {node.name} is inactive"})
             else:
                 node.is_active = True
                 remote.set_mains_value(switch_mains_value)
-            
-            node.mains_val = switch_mains_value
-            node.save()
-    else:
-        id = request.GET.get("id")
-        status = request.GET.get("status")
-
-        if status == "on":
-            switch_mains_value = True
-        else:
-            switch_mains_value = False
-
-        remote = MASTER.get_node(id)
-        node = Slave.objects.get(name=id)
-        if remote is None:
-            node.is_active = False
-            node.mains_val = switch_mains_value
-            node.save()
-            return Response({"message":f"Node {node.name} is inactive"})
-        else:
-            node.is_active = True
-            remote.set_mains_value(switch_mains_value)
-            node.mains_val = switch_mains_value
-            node.save()
+                node.mains_val = switch_mains_value
+                node.save()
     return Response({"message":"Success"})
 
-@api_view(['GET','POST'])
+@api_view(['GET','POST','PUT'])
 def dim_to(request):
-    if request.GET.get('isGlobal'):
-        dim_to_value = int(request.GET.get("value"))
+    print(request.method)
+    if request.method == "GET":
+        node = Slave.objects.first()
+        return Response({'intensity': node.dim_val})
+
+    elif request.method == "PUT":
+        request_data = json.loads(request.body)
+        params = request_data['params']
+
+        if 'isGlobal' in params and params['isGlobal'] is True:
+            dim_to_value = int(params["value"])
 
 
 
-        for node in Slave.objects.all():
-            remote = MASTER.get_node(node.name)
+            for node in Slave.objects.all():
+                remote = MASTER.get_node(node.name)
+                if remote is None:
+                    node.is_active = False
+                else:
+                    node.is_active = True
+                    remote.set_dim_value(dim_to_value)
+                
+                node.dim_val = dim_to_value
+                node.save()
+        else:
+            id = params["id"]
+            dim_to_value = params["value"]
+
+
+            remote = MASTER.get_node(id)
+            node = Slave.objects.get(name=id)
             if remote is None:
                 node.is_active = False
+                node.dim_val = dim_to_value
+                node.save()
+                return Response({"message":f"Node {node.name} is inactive"})
             else:
                 node.is_active = True
                 remote.set_dim_value(dim_to_value)
-            
-            node.dim_val = dim_to_value
-            node.save()
-    else:
-        id = request.GET.get("id")
-        dim_to_value = int(request.GET.get("value"))
+                node.dim_val = dim_to_value
+                node.save()
 
-
-        remote = MASTER.get_node(id)
-        node = Slave.objects.get(name=id)
-        if remote is None:
-            node.is_active = False
-            node.dim_val = dim_to_value
-            node.save()
-            return Response({"message":f"Node {node.name} is inactive"})
-        else:
-            node.is_active = True
-            remote.set_dim_value(dim_to_value)
-            node.dim_val = dim_to_value
-            node.save()
     return Response({"message":"Success"})
 
 

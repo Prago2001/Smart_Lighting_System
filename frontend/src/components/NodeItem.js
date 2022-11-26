@@ -26,7 +26,7 @@ const NodeItem = ({ item, ticked }) => {
           disabled={global.isGlobal}
           onChange={() => {
             axios
-              .get(url + "toggle/", {
+              .put(url + "toggle/", {
                 params: { id: item.id, status: item.relay ? "off" : "on" },
               })
               .then((res) => {

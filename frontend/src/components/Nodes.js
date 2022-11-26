@@ -67,11 +67,15 @@ const Nodes = () => {
   };
 
   const handleChange = (event, newValue) => {
+
     if (newValue !== global.globalValue) {
+      // current dimming value
       console.log(newValue);
       axios
-        .get(url + "dimming/", {
-          params: { isGlobal: true, value: newValue },
+        .put(url + "dimming/", {
+          params: { 
+            isGlobal: true, 
+            value: newValue },
         })
         .then((res) => {
           setGlobalDim(newValue);
@@ -90,22 +94,30 @@ const Nodes = () => {
   useEffect(() => {
     if (global.isGlobal === true) {
       axios
-        .get(url + "toggle/", {
-          params: {
-            isGlobal: true,
-            status: global.globalStatus ? "on" : "off",
-          },
-        })
+        .get(url + "toggle/", 
+        // {
+        //   params: {
+        //     isGlobal: true,
+        //     status: global.globalStatus ? "on" : "off",
+        //   },
+        // }
+        )
         .then((res) => {
-          setGlobalToggle(global.globalStatus);
+          console.log(res.data.relay)
+          // setGlobalToggle(global.globalStatus);
+          setGlobalToggle(res.data.relay);
           console.log(nodes);
         });
       axios
-        .get(url + "dimming/", {
-          params: { isGlobal: true, value: global.globalValue },
-        })
+        .get(url + "dimming/", 
+        // {
+          // params: { 
+          //   isGlobal: true, value: global.globalValue },
+        // }
+        )
         .then((res) => {
-          setGlobalDim(global.globalValue);
+          // set current value
+          setGlobalDim(res.data.intensity);
           console.log(nodes);
         });
     }
@@ -293,7 +305,7 @@ const Nodes = () => {
               )}
             </Button>
           </div>
-        </TabPanel>
+        </TabPanel> 
         <TabPanel value={tab} index={1}>
           <div className="flex grid grid-flow-col grid-cols-12 gap-4 items-center mx-10 p-4 bg-blue-200 bg-opacity-25 rounded-md">
             <div className="flex items-center col-span-2 justify-start">
@@ -349,6 +361,7 @@ const Nodes = () => {
                 marks={marks}
                 min={25}
                 max={100}
+                // to update
                 value={global.globalValue}
                 onChange={handleChange}
                 sx={{
@@ -364,7 +377,7 @@ const Nodes = () => {
                 disabled={!global.isGlobal}
                 onClick={() => {
                   axios
-                    .get(url + "toggle/", {
+                    .put(url + "toggle/", {
                       params: {
                         isGlobal: true,
                         status: global.globalStatus ? "off" : "on",

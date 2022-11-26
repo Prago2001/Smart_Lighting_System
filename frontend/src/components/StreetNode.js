@@ -113,7 +113,7 @@ const StreetNode = () => {
             onChange={(event, newValue) => {
               if (newValue !== item.dim) {
                 axios
-                  .get(url + "dimming/", {
+                  .put(url + "dimming/", {
                     params: { id: id, value: newValue },
                   })
                   .then((res) => {
