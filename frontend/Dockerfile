@@ -1,9 +1,8 @@
-FROM node:16-buster-slim
-
+FROM node:16-alpine
 WORKDIR /app/frontend
-
-COPY package.json /app/frontend/
+# ENV PATH /app/frontend/node_modules/.bin:$PATH
+COPY package.json ./
+COPY package-lock.json ./
+RUN npm install -g npm@9.1.2
 RUN npm install --save --legacy-peer-deps
-COPY . /app/frontend/
-# EXPOSE 3000
-# CMD ["npm", "start"]
+COPY . ./
