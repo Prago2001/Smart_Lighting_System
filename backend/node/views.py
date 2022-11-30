@@ -7,11 +7,38 @@ from dateutil import parser
 # from datetime import date, datetime
 import datetime
 from .models import CurrentMeasurement, Schedule, Slave, Slot, TemperatureMeasurement
-
+import threading
 try:
     from .Coordinator import MASTER
 except Exception as e:
     pass
+
+
+
+class HandleToggle(threading.Thread):
+    def __init__(self,node_name,id,mains_val):
+        self.node_name = node_name
+        self.id = id
+        self.mains_val = mains_val
+        threading.Thread.__init__(daemon=False)
+    
+    def run(self):
+        try:
+            node = Slave.objects.get(unique_id=id)
+            remote = MASTER.get_node(self.node_name)
+            if remote is None:
+                node.is_active = False
+            else:
+                node.is_active = True
+                remote.set_mains_value(self.mains_val)
+            
+            node.mains_val = self.mains_val
+            node.save()
+        except Exception as e:
+            print(e)
+        print(f"Switching {self.mains_val} for {self.node_name}")
+
+
 
 # Create your views here.
 @api_view(['GET'])
@@ -91,15 +118,16 @@ def toggle_mains(request):
 
 
             for node in Slave.objects.all():
-                remote = MASTER.get_node(node.name)
-                if remote is None:
-                    node.is_active = False
-                else:
-                    node.is_active = True
-                    remote.set_mains_value(switch_mains_value)
+                HandleToggle(node.name,node.unique_id,switch_mains_value).start()
+                # remote = MASTER.get_node(node.name)
+                # if remote is None:
+                #     node.is_active = False
+                # else:
+                #     node.is_active = True
+                #     remote.set_mains_value(switch_mains_value)
                 
-                node.mains_val = switch_mains_value
-                node.save()
+                # node.mains_val = switch_mains_value
+                # node.save()
         else:
             id = params['id']
             status = params['status']
