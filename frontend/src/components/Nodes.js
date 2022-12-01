@@ -15,6 +15,8 @@ import { TimeSelecter } from "./TimeSelecter";
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import HourglassBottomIcon from "@mui/icons-material/HourglassBottom";
+import "./nodes.css";
+import classnames from "classnames";
 
 const Nodes = () => {
   const {
@@ -28,11 +30,19 @@ const Nodes = () => {
     setGlobalTick,
   } = useNodeContext();
   const [loading, setLoading] = useState(false);
+  // loadingOnOff: set true on pressing All On/Off button
+  const [loadingOnOff, setLoadingOnOff] = useState(false);
+  // loadingTelemetry: set true on pressing Telemetry button
+  const [loadingTelemetry, setLoadingTelemetry] = useState(false);
   const [syncloading, setSyncloading] = useState(false);
   const [applyloading, setApplyloading] = useState(false);
   const [tab, setTab] = useState(tabVal);
   const [sun, setSun] = useState({ sunrise: 0, sunset: 0 });
   const [autoSchedule, setAutoSchedule] = useState([]);
+  // pointerEvent: set true to make all clickable things unclickable. 
+  const [pointerEvent, setPointerEvent] = useState(false);
+  const [telemetryStatus, setTelemetryStatus] = useState(true);
+  const [scheduleStatus, setScheduleStatus] = useState(true);
 
   const handleChangeTab = (event, newValue) => {
     setTab(newValue);
@@ -71,6 +81,7 @@ const Nodes = () => {
     if (newValue !== global.globalValue) {
       // current dimming value
       console.log(newValue);
+      setPointerEvent(true);
       axios
         .put(url + "dimming/", {
           params: { 
@@ -80,6 +91,7 @@ const Nodes = () => {
         .then((res) => {
           setGlobalDim(newValue);
           console.log(nodes);
+          setPointerEvent(false);
         });
     }
   };
@@ -92,6 +104,12 @@ const Nodes = () => {
   }, []);
 
   useEffect(() => {
+    axios
+      .get(url + "setTelemetry/",)
+      .then((res) => {
+        console.log("useEffect of setTelemetry");
+        setTelemetryStatus(res.data.status);
+      })
     if (global.isGlobal === true) {
       axios
         .get(url + "toggle/", 
@@ -120,10 +138,16 @@ const Nodes = () => {
           setGlobalDim(res.data.intensity);
           console.log(nodes);
         });
+
     }
   }, [global.isGlobal]);
 
   useEffect(() => {
+    axios.get(url + "activateSchedule/")
+    .then((res) => {
+      setScheduleStatus(res.data.status);
+    })
+
     axios.get(url + "getSchedule/").then((res) => {
       console.log(res);
       setSun({ sunrise: res.data.sunrise, sunset: res.data.sunset });
@@ -175,7 +199,8 @@ const Nodes = () => {
   }
 
   return (
-    <div className="lg:container md:mx-auto mt-8 z-0">
+    // <div className="lg:container md:mx-auto mt-8 z-0">
+    <div className={classnames("lg:container md:mx-auto mt-8 z-0", {"content-pointer-event-none": pointerEvent})}>
       <div className="flex grid grid-flow-col grid-cols-6 gap-4 items-center m-8 mx-10 p-6 bg-gray-200 rounded-md  ">
         <div className="flex col-span-4 items-center justify-start text-2xl text-primary font-bold ">
           Area Name
@@ -244,11 +269,45 @@ const Nodes = () => {
             ))}
           </div>
           <div className="flex grid grid-flow-row grid-cols-9 gap-4 grid-rows-1 p-4 bg-blue-200 bg-opacity-25 rounded-md">
+          <Button
+              className="col-start-4 col-span-2"
+              variant="contained"
+              sx={buttonSx}
+              //disabled={syncloading}
+              backgroundColor="red"
+              onClick={() => {
+                axios
+                  .put(url + "activateSchedule/",{
+                    params: {
+                      status: !scheduleStatus,
+                    },
+                  }
+                  )
+                  .then((res) => {
+                  setScheduleStatus(!scheduleStatus);
+                });
+              }}
+            >
+              {scheduleStatus ? "Disable ":"Enable "}Schedules
+              {loading && (
+                <CircularProgress
+                  color="success"
+                  size={24}
+                  sx={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    marginTop: "-12px",
+                    marginLeft: "-12px",
+                  }}
+                />
+              )}
+            </Button>
             <Button
               className="col-start-6 col-span-2"
               variant="outlined"
               sx={buttonSx}
-              disabled={syncloading}
+              disabled={syncloading || !scheduleStatus}
               onClick={() => {
                 setSyncloading(true);
                 axios.get(url + "sync/").then((res) => {
@@ -307,7 +366,7 @@ const Nodes = () => {
           </div>
         </TabPanel> 
         <TabPanel value={tab} index={1}>
-          <div className="flex grid grid-flow-col grid-cols-12 gap-4 items-center mx-10 p-4 bg-blue-200 bg-opacity-25 rounded-md">
+          <div className="flex grid grid-flow-col grid-cols-13 gap-4 items-center mx-10 p-4 bg-blue-200 bg-opacity-25 rounded-md">
             <div className="flex items-center col-span-2 justify-start">
               <Checkbox
                 checked={global.isGlobal}
@@ -374,8 +433,11 @@ const Nodes = () => {
 
             <div className="flex col-start-10 col-span-2 items-centers justify-end ">
               <Button
-                disabled={!global.isGlobal}
+                disabled={!global.isGlobal || loadingOnOff}
                 onClick={() => {
+                  setPointerEvent(true);
+                  setLoadingOnOff(true);
+                  setTimeout(() => {
                   axios
                     .put(url + "toggle/", {
                       params: {
@@ -386,12 +448,73 @@ const Nodes = () => {
                     .then((res) => {
                       setGlobalToggle(!global.globalStatus);
                       console.log(nodes);
+                      setPointerEvent(false);
+                      setLoadingOnOff(false);
                     });
+                }, 5000);
                 }}
                 color={global.globalStatus ? "success" : "error"}
                 variant={global.globalStatus ? "contained" : "outlined"}
               >
                 All On/Off
+                {loadingOnOff && (
+                  <CircularProgress
+                    color="success"
+                    size={24}
+                    sx={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      marginTop: "-12px",
+                      marginLeft: "-12px",
+                    }}
+                  />
+                )}
+              </Button>
+            </div>
+
+            <div className="flex col-start-13 col-span-2 items-centers ">
+              <Button
+                disabled={loadingTelemetry}
+                onClick={() => {
+                  setPointerEvent(true);
+                  setLoadingTelemetry(true);
+                  setTimeout(() => {
+
+                  axios
+                    .put(url + "setTelemetry/", {
+                      params: {
+                        status: !telemetryStatus,
+                      },
+                    })
+                    .then((res) => {
+                      setTelemetryStatus(!telemetryStatus);
+                      setPointerEvent(false);
+                      setLoadingTelemetry(false);
+                    });
+
+                  // console.log("Hi this is telemetry button")
+                  // setPointerEvent(false);
+                  // setLoadingTelemetry(false);
+                }, 5000);
+                }}
+                color={telemetryStatus ? "success" : "error"}
+                variant={telemetryStatus ? "contained" : "outlined"}
+              >
+                Telemetry
+                {loadingTelemetry && (
+                  <CircularProgress
+                    color="success"
+                    size={24}
+                    sx={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      marginTop: "-12px",
+                      marginLeft: "-12px",
+                    }}
+                  />
+                )}
               </Button>
             </div>
           </div>

@@ -1,0 +1,5 @@
+
+/* This class is used to make all buttons unclickable while process takes place */
+.content-pointer-event-none {
+    pointer-events: none;
+}
