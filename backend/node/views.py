@@ -7,7 +7,7 @@ from dateutil import parser
 # from datetime import date, datetime
 import datetime
 from .models import CurrentMeasurement, Schedule, Slave, Slot, TemperatureMeasurement
-
+from apscheduler.job import Job
 try:
     from .Coordinator import MASTER
 except Exception as e:
@@ -309,4 +309,19 @@ def getGraphValues(request):
     return Response({'curr': curr, 'temp': temp})
 
 
-
+@api_view(['GET','PUT'])
+def enable_disable_telemetry(request):
+    if request.method == "PUT":
+        request_data = json.loads(request.body)
+        params = request_data['params']
+        if 'status' in params and params['status'] is False:
+            job:Job
+            for job in scheduler.get_jobs():
+                if job.name == "current_temperature_values":
+                    job.pause()
+        elif 'status' in params and params['status'] is True:
+            job:Job
+            for job in scheduler.get_jobs():
+                if job.name == "current_temperature_values":
+                    job.resume()
+        return Response(data={"message":"Success"})

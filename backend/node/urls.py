@@ -12,4 +12,5 @@ urlpatterns = [
     path('sync/',views.syncToSchedule),
     path('instValues/',views.getInstValues),
     path('graphValues/',views.getGraphValues),
+    path('setTelemetry/',views.enable_disable_telemetry)
 ]
