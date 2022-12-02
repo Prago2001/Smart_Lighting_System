@@ -55,7 +55,7 @@ class Remote(RemoteZigBeeDevice):
             return 0
     
     def get_current_value(self):
-        return self.remote_device.get_adc_value(current)
+        return round(self.remote_device.get_adc_value(current),2)
     
     def get_temperature_value(self):
         # t_val stands for actual temperature
