@@ -1,6 +1,6 @@
 import { React, useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { Typography, Slider, Button, Tabs, Tab, Box } from "@mui/material";
+import { Typography, Slider, Button, Tabs, Tab, Box, Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle } from "@mui/material";
 import NodeItem from "./NodeItem";
 import { Link } from "react-router-dom";
 import Checkbox from "@mui/material/Checkbox";
@@ -43,6 +43,8 @@ const Nodes = () => {
   const [pointerEvent, setPointerEvent] = useState(false);
   const [telemetryStatus, setTelemetryStatus] = useState(true);
   const [scheduleStatus, setScheduleStatus] = useState(true);
+  // AlerDialog open or close?
+  const [open, setOpen] = useState(false);
 
   const handleChangeTab = (event, newValue) => {
     setTab(newValue);
@@ -276,6 +278,11 @@ const Nodes = () => {
               //disabled={syncloading}
               backgroundColor="red"
               onClick={() => {
+                if(scheduleStatus)
+                {
+                  setOpen(true);
+                }
+                else {
                 axios
                   .put(url + "activateSchedule/",{
                     params: {
@@ -286,6 +293,7 @@ const Nodes = () => {
                   .then((res) => {
                   setScheduleStatus(!scheduleStatus);
                 });
+              }
               }}
             >
               {scheduleStatus ? "Disable ":"Enable "}Schedules
@@ -303,6 +311,40 @@ const Nodes = () => {
                 />
               )}
             </Button>
+            <Dialog 
+              open={open}
+              onClose={() => {setOpen(false)}}
+              aria-labelledby="alert-dialog-title"
+              aria-describedby="alert-dialog-description"
+            >
+              <DialogTitle id="alert-dialog-title">
+                {"ALERT: Disable Schedules?"}
+              </DialogTitle>
+              <DialogContent>
+                <DialogContentText id="alert-dialog-description">
+                  System will not follow schedules on disabling schedules.
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => {setOpen(false)}}>NO</Button>
+                <Button onClick={() => {
+                  axios
+                  .put(url + "activateSchedule/",{
+                    params: {
+                      status: !scheduleStatus,
+                    },
+                  }
+                  )
+                  .then((res) => {
+                  setScheduleStatus(!scheduleStatus);
+                  setOpen(false);
+                });
+                }} 
+                autoFocus>
+                  YES
+                </Button>
+              </DialogActions>
+            </Dialog>
             <Button
               className="col-start-6 col-span-2"
               variant="outlined"
