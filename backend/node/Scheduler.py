@@ -48,7 +48,9 @@ def getInsValues():
                     curr = curr * 2.27
                 else:
                     curr = curr * 2.3
-                temp = ((temp * 1.2 / 1023) - 0.5) * 100
+                # Below line is unnecessary as the same calculation 
+                # is carried out in remote.py -> get_temperatrue_value_value()
+                # temp = ((temp * 1.2 / 1023) - 0.5) * 100  
                 CurrentMeasurement.objects.create(SlaveId = node,currentValue = curr)
                 TemperatureMeasurement.objects.create(SlaveId = node,temperatureValue = temp)
                 node.current = curr
