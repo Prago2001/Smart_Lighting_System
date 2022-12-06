@@ -20,6 +20,8 @@ class Coordinator(metaclass=Singleton):
         self.network = self.master.get_network()
         self.SunRise = None
         self.SunSet = None
+        self.Telemetry = True
+        self.Schedule = True  # Variables are for telemetry,enable schedule button
 
     def discover_nodes(self) -> List[Remote]:
         self.nodes : List[Remote] = []

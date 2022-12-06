@@ -10,6 +10,8 @@ from .models import CurrentMeasurement, Schedule, Slave, Slot, TemperatureMeasur
 import time
 import concurrent.futures
 from .async_functions import perform_dimming, perform_toggle
+from apscheduler.job import Job
+
 try:
     from .Coordinator import MASTER
 except Exception as e:
@@ -319,4 +321,57 @@ def getGraphValues(request):
     return Response({'curr': curr, 'temp': temp})
 
 
+@api_view(['GET','PUT'])
+def enable_disable_telemetry(request):
 
+    if request.method == "GET":
+        return Response({'status': MASTER.Telemetry})
+
+    elif request.method == "PUT":
+        request_data = json.loads(request.body)
+        params = request_data['params']
+        if 'status' in params and params['status'] is False:
+            MASTER.Telemetry = False
+            job:Job
+            for job in scheduler.get_jobs():
+                if job.name == "current_temperature_values":
+                    job.pause()
+        elif 'status' in params and params['status'] is True:
+            MASTER.Telemetry = True
+            job:Job
+            for job in scheduler.get_jobs():
+                if job.name == "current_temperature_values":
+                    job.resume()
+        
+        print("JOB LIST : ")
+        for job in scheduler.get_jobs():
+            print("name: %s, trigger: %s, next run: %s, handler: %s" % (job.name, job.trigger, job.next_run_time, job.func))
+        return Response(data={"message":"Success"})
+
+
+@api_view(['GET','PUT'])
+def enable_disable_schedule(request):
+    if request.method == "GET":
+        return Response({'status': MASTER.Schedule})
+
+    elif request.method == "PUT":
+        request_data = json.loads(request.body)
+        params = request_data['params']
+        if 'status' in params and params['status'] is False:
+            MASTER.Schedule = False
+            job:Job
+            for job in scheduler.get_jobs():
+                if job.name in ('dimming_job','sync_auto','sync_every_half_hour'):
+                    job.pause()
+        elif 'status' in params and params['status'] is True:
+            MASTER.Schedule = True
+            job:Job
+            for job in scheduler.get_jobs():
+                if job.name in ('dimming_job','sync_auto','sync_every_half_hour'):
+                    job.resume()
+        
+        print("JOB LIST : ")
+        for job in scheduler.get_jobs():
+            print("name: %s, trigger: %s, next run: %s, handler: %s" % (job.name, job.trigger, job.next_run_time, job.func))
+        
+        return Response(data={"message":"Success"})

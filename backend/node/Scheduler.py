@@ -3,8 +3,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from astral import LocationInfo
 from astral.sun import sun
 from .models import Schedule, Slot, CurrentMeasurement, TemperatureMeasurement,Slave
+
 from .async_functions import get_curr_temp_val_async
 import concurrent.futures
+
 try:
     from .Coordinator import MASTER
 except Exception as e:
@@ -25,8 +27,9 @@ def getInsValues():
         threads = [executor.submit(fn=get_curr_temp_val_async,node_name=node.name,id=node.unique_id) for node in Slave.objects.all()]
         for f in concurrent.futures.as_completed(threads):
             id, status, curr, temp = f.result()
+            node = Slave.objects.get(unique_id=id)
             if status is True:
-                node = Slave.objects.get(unique_id=id)
+                
                 curr = curr - 447
                 if 150 > curr > 50:
                     curr = curr * 2.93
