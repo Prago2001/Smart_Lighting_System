@@ -48,3 +48,23 @@ def perform_toggle(node_name,id,mains_val):
         sleep(0.4)
     
     return (False,id)
+
+def getInsValues(node_name,id):
+    
+    counter = 0
+    while counter < 3:
+        remote = MASTER.get_node(node_name) 
+        if remote is not None:
+            try:
+                temp = remote.get_temperature_value() 
+                curr = remote.get_current_value()
+                return (id,temp,curr)
+
+            except Exception as e:
+                print(str(e))
+    
+        counter+=1
+        sleep(0.4)
+    
+    return (id,False)
+        
