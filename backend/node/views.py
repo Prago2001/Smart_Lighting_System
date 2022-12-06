@@ -7,11 +7,17 @@ from dateutil import parser
 # from datetime import date, datetime
 import datetime
 from .models import CurrentMeasurement, Schedule, Slave, Slot, TemperatureMeasurement
+import time
+import concurrent.futures
+from .async_functions import perform_dimming, perform_toggle
 from apscheduler.job import Job
+
 try:
     from .Coordinator import MASTER
 except Exception as e:
     pass
+
+
 
 # Create your views here.
 @api_view(['GET'])
@@ -68,7 +74,6 @@ def discover_remote_nodes(request):
 
 @api_view(['GET','POST','PUT'])
 def toggle_mains(request):
-    print(request.method)
     if request.method == "GET":
         data_list = []
         toggle_status = []
@@ -79,6 +84,7 @@ def toggle_mains(request):
         else:
             return Response({'relay': False})
     elif request.method == "PUT":
+        start_time = time.time()
         request_data = json.loads(request.body)
         params = request_data['params']
         if 'isGlobal' in params and params['isGlobal'] is True:
@@ -89,17 +95,19 @@ def toggle_mains(request):
             else:
                 switch_mains_value = False
 
-
-            for node in Slave.objects.all():
-                remote = MASTER.get_node(node.name)
-                if remote is None:
-                    node.is_active = False
-                else:
-                    node.is_active = True
-                    remote.set_mains_value(switch_mains_value)
-                
-                node.mains_val = switch_mains_value
-                node.save()
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                threads = [executor.submit(fn=perform_toggle,node_name=node.name,id=node.unique_id,mains_val=switch_mains_value) for node in Slave.objects.all()]
+                for f in concurrent.futures.as_completed(threads):
+                    status, id = f.result()
+                    node = Slave.objects.get(unique_id=id)
+                    if status is True:
+                        node.is_active = True
+                        node.mains_val = switch_mains_value
+                    else:
+                        print(f"Unable to toggle {node.name}")
+                        node.is_active = False
+                    node.save()
+            print(f"Time needed for execution {time.time() - start_time}")
         else:
             id = params['id']
             status = params['status']
@@ -131,6 +139,7 @@ def dim_to(request):
         return Response({'intensity': node.dim_val})
 
     elif request.method == "PUT":
+        start_time = time.time()
         request_data = json.loads(request.body)
         params = request_data['params']
 
@@ -139,16 +148,19 @@ def dim_to(request):
 
 
 
-            for node in Slave.objects.all():
-                remote = MASTER.get_node(node.name)
-                if remote is None:
-                    node.is_active = False
-                else:
-                    node.is_active = True
-                    remote.set_dim_value(dim_to_value)
-                
-                node.dim_val = dim_to_value
-                node.save()
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                threads = [executor.submit(fn=perform_dimming,node_name=node.name,id=node.unique_id,dim_value=dim_to_value) for node in Slave.objects.all()]
+                for f in concurrent.futures.as_completed(threads):
+                    status, id = f.result()
+                    node = Slave.objects.get(unique_id=id)
+                    if status is True:
+                        node.is_active = True
+                        node.dim_val = dim_to_value
+                    else:
+                        print(f"Unable to dim {node.name}")
+                        node.is_active = False
+                    node.save()
+            print(f"Time needed for execution {time.time() - start_time}")
         else:
             id = params["id"]
             dim_to_value = params["value"]
