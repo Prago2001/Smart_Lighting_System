@@ -3,8 +3,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from astral import LocationInfo
 from astral.sun import sun
 from .models import Schedule, Slot, CurrentMeasurement, TemperatureMeasurement,Slave
-
-
+from .async_functions import get_curr_temp_val_async
+import concurrent.futures
 try:
     from .Coordinator import MASTER
 except Exception as e:
@@ -21,38 +21,31 @@ scheduler = BackgroundScheduler()
 # in startup :
 
 def getInsValues():
-    for node in Slave.objects.all():
-        remote = MASTER.get_node(node.name)
-
-        if remote is None:
-            node.is_active = False
-        else:
-            # If is_active of node is False
-            # and communication re-ocurs then
-            # setting it to current mains value and dim value 
-            if node.is_active is False:
-                remote.set_mains_value(node.mains_val)
-                remote.set_dim_value(node.dim_val)
-            node.is_active = True
-            temp = remote.get_temperature_value() 
-            curr = remote.get_current_value()
-
-            curr = curr - 447
-            if 150 > curr > 50:
-                curr = curr * 2.93
-            elif 250 > curr > 150:
-                curr = curr * 2.44
-            elif 350 > curr > 250:
-                curr = curr * 2.27
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        threads = [executor.submit(fn=get_curr_temp_val_async,node_name=node.name,id=node.unique_id) for node in Slave.objects.all()]
+        for f in concurrent.futures.as_completed(threads):
+            id, status, curr, temp = f.result()
+            if status is True:
+                node = Slave.objects.get(unique_id=id)
+                curr = curr - 447
+                if 150 > curr > 50:
+                    curr = curr * 2.93
+                elif 250 > curr > 150:
+                    curr = curr * 2.44
+                elif 350 > curr > 250:
+                    curr = curr * 2.27
+                else:
+                    curr = curr * 2.3
+                CurrentMeasurement.objects.create(SlaveId = node,currentValue = curr)
+                TemperatureMeasurement.objects.create(SlaveId = node,temperatureValue = temp)
+                node.current = curr
+                node.temperature = temp
+                node.is_active = True
+                node.save()
             else:
-                curr = curr * 2.3
-            temp = ((temp * 1.2 / 1023) - 0.5) * 100
-            CurrentMeasurement.objects.create(SlaveId = node,currentValue = curr)
-            TemperatureMeasurement.objects.create(SlaveId = node,temperatureValue = temp)
-            node.current = curr
-            node.temperature = temp
-
-        node.save()
+                node.is_active = False
+                node.save()
+        
 
 def fetchSunModel() :
 

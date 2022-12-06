@@ -49,7 +49,7 @@ def perform_toggle(node_name,id,mains_val):
     
     return (False,id)
 
-def getInsValues(node_name,id):
+def get_curr_temp_val_async(node_name,id):
     
     counter = 0
     while counter < 3:
@@ -58,7 +58,7 @@ def getInsValues(node_name,id):
             try:
                 temp = remote.get_temperature_value() 
                 curr = remote.get_current_value()
-                return (id,temp,curr)
+                return (id,True,temp,curr)
 
             except Exception as e:
                 print(str(e))
@@ -66,5 +66,5 @@ def getInsValues(node_name,id):
         counter+=1
         sleep(0.4)
     
-    return (id,False)
+    return (id,False,0,0)
         
