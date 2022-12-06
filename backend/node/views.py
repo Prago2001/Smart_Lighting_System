@@ -7,13 +7,34 @@ from dateutil import parser
 # from datetime import date, datetime
 import datetime
 from .models import CurrentMeasurement, Schedule, Slave, Slot, TemperatureMeasurement
-import threading
+import threading, time
+import concurrent.futures
+from typing import List
 try:
     from .Coordinator import MASTER
 except Exception as e:
     pass
 
 
+def perform_dimming(node_name,id,dim_value):
+    node = Slave.objects.get(unique_id=id)
+    counter = 0
+    while counter < 3:
+        # time.sleep(0.5)
+        remote = MASTER.get_node(node_name)
+        if remote is not None:
+            remote.set_dim_value(dim_value)
+            print(f"Switching {dim_value} for {node_name}")
+            break
+    if remote is None:
+        node.is_active = False
+        print(f"Unable to dim {node_name}")
+    else:
+        node.is_active = True
+            
+    node.dim_val = dim_value
+    node.save()
+    return node_name
 
 class HandleToggle(threading.Thread):
     def __init__(self,node_name,id,mains_val):
@@ -23,15 +44,25 @@ class HandleToggle(threading.Thread):
         threading.Thread.__init__(self,daemon=False)
     
     def run(self):
+        print(f'Thread started execution in {self.node_name}')
         try:
             node = Slave.objects.get(unique_id=self.id)
-            remote = MASTER.get_node(self.node_name)
+            remote = None
+            counter = 0
+            while counter < 3:
+                time.sleep(0.5)
+                remote = MASTER.get_node(self.node_name)
+                if remote is not None:
+                    remote.set_mains_value(self.mains_val)
+                    print(f"Switching {self.mains_val} for {self.node_name}")
+                    break
+                counter += 1
             if remote is None:
                 node.is_active = False
+                print(f"Unable to toggle {self.node_name}")
             else:
                 node.is_active = True
-                remote.set_mains_value(self.mains_val)
-                print(f"Switching {self.mains_val} for {self.node_name}")
+                
             node.mains_val = self.mains_val
             node.save()
         except Exception as e:
@@ -96,7 +127,6 @@ def discover_remote_nodes(request):
 
 @api_view(['GET','POST','PUT'])
 def toggle_mains(request):
-    print(request.method)
     if request.method == "GET":
         data_list = []
         toggle_status = []
@@ -107,6 +137,7 @@ def toggle_mains(request):
         else:
             return Response({'relay': False})
     elif request.method == "PUT":
+        start_time = time.time()
         request_data = json.loads(request.body)
         params = request_data['params']
         if 'isGlobal' in params and params['isGlobal'] is True:
@@ -117,9 +148,11 @@ def toggle_mains(request):
             else:
                 switch_mains_value = False
 
-
+            threads : List[HandleToggle] = []
             for node in Slave.objects.all():
-                HandleToggle(node_name=node.name,id=node.unique_id,mains_val=switch_mains_value).start()
+                t = HandleToggle(node_name=node.name,id=node.unique_id,mains_val=switch_mains_value)
+                t.start()
+                threads.append(t)
                 # remote = MASTER.get_node(node.name)
                 # if remote is None:
                 #     node.is_active = False
@@ -129,6 +162,12 @@ def toggle_mains(request):
                 
                 # node.mains_val = switch_mains_value
                 # node.save()
+            try:
+                for t in threads:
+                    t.join()
+            except Exception as e:
+                print(e)
+            print(f"Time needed for execution {time.time() - start_time}")
         else:
             id = params['id']
             status = params['status']
@@ -160,6 +199,7 @@ def dim_to(request):
         return Response({'intensity': node.dim_val})
 
     elif request.method == "PUT":
+        start_time = time.time()
         request_data = json.loads(request.body)
         params = request_data['params']
 
@@ -168,16 +208,21 @@ def dim_to(request):
 
 
 
-            for node in Slave.objects.all():
-                remote = MASTER.get_node(node.name)
-                if remote is None:
-                    node.is_active = False
-                else:
-                    node.is_active = True
-                    remote.set_dim_value(dim_to_value)
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                threads = [executor.submit(fn=perform_dimming,node_name=node.name,id=node.unique_id,dim_value=dim_to_value) for node in Slave.objects.all()]
+                for f in concurrent.futures.as_completed(threads):
+                    print(f.result())
+
+                # remote = MASTER.get_node(node.name)
+                # if remote is None:
+                #     node.is_active = False
+                # else:
+                #     node.is_active = True
+                #     remote.set_dim_value(dim_to_value)
                 
-                node.dim_val = dim_to_value
-                node.save()
+                # node.dim_val = dim_to_value
+                # node.save()
+            print(f"Time needed for execution {time.time() - start_time}")
         else:
             id = params["id"]
             dim_to_value = params["value"]
