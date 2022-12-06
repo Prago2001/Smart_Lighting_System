@@ -1,5 +1,6 @@
 
 from .models import Slave
+from time import sleep
 try:
     from .Coordinator import MASTER
 except Exception as e:
@@ -9,6 +10,7 @@ except Exception as e:
 
 def perform_dimming(node_name,id,dim_value):
     #node = Slave.objects.get(unique_id=id)
+    print(f"Starting thread in {node_name}")
     counter = 0
     while counter < 3:
         # time.sleep(0.5)
@@ -17,6 +19,9 @@ def perform_dimming(node_name,id,dim_value):
             remote.set_dim_value(dim_value)
             print(f"Switching {dim_value} for {node_name}")
             return (True,id)
+        counter += 1
+        sleep(0.4)
+        
     
     return (False,id)
     
@@ -31,13 +36,15 @@ def perform_dimming(node_name,id,dim_value):
     # return node_name
 
 def perform_toggle(node_name,id,mains_val):
+    print(f"Starting thread in {node_name}")
     counter = 0
     while counter < 3:
-        # time.sleep(0.5)
         remote = MASTER.get_node(node_name)
         if remote is not None:
             remote.set_mains_value(mains_val)
             print(f"Toggling to {mains_val} for {node_name}")
             return (True,id)
+        counter += 1
+        sleep(0.4)
     
     return (False,id)

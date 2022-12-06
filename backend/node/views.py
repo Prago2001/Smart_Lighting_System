@@ -7,68 +7,13 @@ from dateutil import parser
 # from datetime import date, datetime
 import datetime
 from .models import CurrentMeasurement, Schedule, Slave, Slot, TemperatureMeasurement
-import threading, time
+import time
 import concurrent.futures
-from typing import List
+from .async_functions import perform_dimming, perform_toggle
 try:
     from .Coordinator import MASTER
 except Exception as e:
     pass
-
-
-def perform_dimming(node_name,id,dim_value):
-    node = Slave.objects.get(unique_id=id)
-    counter = 0
-    while counter < 3:
-        # time.sleep(0.5)
-        remote = MASTER.get_node(node_name)
-        if remote is not None:
-            remote.set_dim_value(dim_value)
-            print(f"Switching {dim_value} for {node_name}")
-            break
-    if remote is None:
-        node.is_active = False
-        print(f"Unable to dim {node_name}")
-    else:
-        node.is_active = True
-            
-    node.dim_val = dim_value
-    node.save()
-    return node_name
-
-class HandleToggle(threading.Thread):
-    def __init__(self,node_name,id,mains_val):
-        self.node_name = node_name
-        self.id = id
-        self.mains_val = mains_val
-        threading.Thread.__init__(self,daemon=False)
-    
-    def run(self):
-        print(f'Thread started execution in {self.node_name}')
-        try:
-            node = Slave.objects.get(unique_id=self.id)
-            remote = None
-            counter = 0
-            while counter < 3:
-                time.sleep(0.5)
-                remote = MASTER.get_node(self.node_name)
-                if remote is not None:
-                    remote.set_mains_value(self.mains_val)
-                    print(f"Switching {self.mains_val} for {self.node_name}")
-                    break
-                counter += 1
-            if remote is None:
-                node.is_active = False
-                print(f"Unable to toggle {self.node_name}")
-            else:
-                node.is_active = True
-                
-            node.mains_val = self.mains_val
-            node.save()
-        except Exception as e:
-            print(e)
-            print(f"Unable to toggle {self.node_name}")
-        
 
 
 
@@ -148,25 +93,18 @@ def toggle_mains(request):
             else:
                 switch_mains_value = False
 
-            threads : List[HandleToggle] = []
-            for node in Slave.objects.all():
-                t = HandleToggle(node_name=node.name,id=node.unique_id,mains_val=switch_mains_value)
-                t.start()
-                threads.append(t)
-                # remote = MASTER.get_node(node.name)
-                # if remote is None:
-                #     node.is_active = False
-                # else:
-                #     node.is_active = True
-                #     remote.set_mains_value(switch_mains_value)
-                
-                # node.mains_val = switch_mains_value
-                # node.save()
-            try:
-                for t in threads:
-                    t.join()
-            except Exception as e:
-                print(e)
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                threads = [executor.submit(fn=perform_toggle,node_name=node.name,id=node.unique_id,mains_val=switch_mains_value) for node in Slave.objects.all()]
+                for f in concurrent.futures.as_completed(threads):
+                    status, id = f.result()
+                    node = Slave.objects.get(unique_id=id)
+                    if status is True:
+                        node.is_active = True
+                        node.mains_val = switch_mains_value
+                    else:
+                        print(f"Unable to toggle {node.name}")
+                        node.is_active = False
+                    node.save()
             print(f"Time needed for execution {time.time() - start_time}")
         else:
             id = params['id']
@@ -211,17 +149,15 @@ def dim_to(request):
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 threads = [executor.submit(fn=perform_dimming,node_name=node.name,id=node.unique_id,dim_value=dim_to_value) for node in Slave.objects.all()]
                 for f in concurrent.futures.as_completed(threads):
-                    print(f.result())
-
-                # remote = MASTER.get_node(node.name)
-                # if remote is None:
-                #     node.is_active = False
-                # else:
-                #     node.is_active = True
-                #     remote.set_dim_value(dim_to_value)
-                
-                # node.dim_val = dim_to_value
-                # node.save()
+                    status, id = f.result()
+                    node = Slave.objects.get(unique_id=id)
+                    if status is True:
+                        node.is_active = True
+                        node.dim_val = dim_to_value
+                    else:
+                        print(f"Unable to dim {node.name}")
+                        node.is_active = False
+                    node.save()
             print(f"Time needed for execution {time.time() - start_time}")
         else:
             id = params["id"]
