@@ -9,7 +9,7 @@ import datetime
 from .models import CurrentMeasurement, Schedule, Slave, Slot, TemperatureMeasurement
 import time
 import concurrent.futures
-from .async_functions import perform_dimming, perform_toggle
+from .Coordinator import perform_dimming,perform_toggle
 from apscheduler.job import Job
 
 try:
@@ -96,7 +96,7 @@ def toggle_mains(request):
                 switch_mains_value = False
 
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                threads = [executor.submit(fn=perform_toggle,node_name=node.name,id=node.unique_id,mains_val=switch_mains_value) for node in Slave.objects.all()]
+                threads = [executor.submit(perform_toggle,node_name=node.name,id=node.unique_id,mains_val=switch_mains_value) for node in Slave.objects.all()]
                 for f in concurrent.futures.as_completed(threads):
                     status, id = f.result()
                     node = Slave.objects.get(unique_id=id)
@@ -149,7 +149,7 @@ def dim_to(request):
 
 
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                threads = [executor.submit(fn=perform_dimming,node_name=node.name,id=node.unique_id,dim_value=dim_to_value) for node in Slave.objects.all()]
+                threads = [executor.submit(perform_dimming,node_name=node.name,id=node.unique_id,dim_value=dim_to_value) for node in Slave.objects.all()]
                 for f in concurrent.futures.as_completed(threads):
                     status, id = f.result()
                     node = Slave.objects.get(unique_id=id)

@@ -4,7 +4,7 @@ from astral import LocationInfo
 from astral.sun import sun
 from .models import Schedule, Slot, CurrentMeasurement, TemperatureMeasurement,Slave
 
-from .async_functions import get_curr_temp_val_async
+from .Coordinator import get_curr_temp_val_async
 import concurrent.futures
 
 try:
@@ -24,7 +24,7 @@ scheduler = BackgroundScheduler()
 
 def getInsValues():
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        threads = [executor.submit(fn=get_curr_temp_val_async,node_name=node.name,id=node.unique_id) for node in Slave.objects.all()]
+        threads = [executor.submit(get_curr_temp_val_async,node_name=node.name,id=node.unique_id) for node in Slave.objects.all()]
         for f in concurrent.futures.as_completed(threads):
             id, status, curr, temp = f.result()
             node = Slave.objects.get(unique_id=id)
