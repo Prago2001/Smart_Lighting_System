@@ -16,7 +16,7 @@ def perform_dimming(node_name,id,dim_value):
             print(f"Switching {dim_value} for {node_name}")
             return (True,id)
         counter += 1
-        sleep(0.4)
+        sleep(0.5)
         
     
     return (False,id)
@@ -31,7 +31,7 @@ def perform_toggle(node_name,id,mains_val):
             print(f"Toggling to {mains_val} for {node_name}")
             return (True,id)
         counter += 1
-        sleep(0.4)
+        sleep(0.5)
     
     return (False,id)
 
@@ -50,7 +50,7 @@ def get_curr_temp_val_async(node_name,id):
                 print(str(e))
     
         counter+=1
-        sleep(0.4)
+        sleep(0.5)
     
     return (id,False,0,0)
 

@@ -479,7 +479,6 @@ const Nodes = () => {
                 onClick={() => {
                   setPointerEvent(true);
                   setLoadingOnOff(true);
-                  setTimeout(() => {
                   axios
                     .put(url + "toggle/", {
                       params: {
@@ -493,7 +492,6 @@ const Nodes = () => {
                       setPointerEvent(false);
                       setLoadingOnOff(false);
                     });
-                }, 5000);
                 }}
                 color={global.globalStatus ? "success" : "error"}
                 variant={global.globalStatus ? "contained" : "outlined"}
@@ -521,7 +519,6 @@ const Nodes = () => {
                 onClick={() => {
                   setPointerEvent(true);
                   setLoadingTelemetry(true);
-                  setTimeout(() => {
 
                   axios
                     .put(url + "setTelemetry/", {
@@ -538,7 +535,6 @@ const Nodes = () => {
                   // console.log("Hi this is telemetry button")
                   // setPointerEvent(false);
                   // setLoadingTelemetry(false);
-                }, 5000);
                 }}
                 color={telemetryStatus ? "success" : "error"}
                 variant={telemetryStatus ? "contained" : "outlined"}

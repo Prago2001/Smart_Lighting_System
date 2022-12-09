@@ -29,16 +29,6 @@ def getInsValues():
             id, status, curr, temp = f.result()
             node = Slave.objects.get(unique_id=id)
             if status is True:
-                
-                curr = curr - 447
-                if 150 > curr > 50:
-                    curr = curr * 2.93
-                elif 250 > curr > 150:
-                    curr = curr * 2.44
-                elif 350 > curr > 250:
-                    curr = curr * 2.27
-                else:
-                    curr = curr * 2.3
                 CurrentMeasurement.objects.create(SlaveId = node,currentValue = curr)
                 TemperatureMeasurement.objects.create(SlaveId = node,temperatureValue = temp)
                 node.current = curr

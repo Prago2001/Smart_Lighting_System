@@ -133,7 +133,7 @@ def toggle_mains(request):
 
 @api_view(['GET','POST','PUT'])
 def dim_to(request):
-    print(request.method)
+    # print(request.method)
     if request.method == "GET":
         node = Slave.objects.first()
         return Response({'intensity': node.dim_val})

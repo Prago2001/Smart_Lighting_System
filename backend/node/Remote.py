@@ -55,7 +55,18 @@ class Remote(RemoteZigBeeDevice):
             return 0
     
     def get_current_value(self):
-        return round(self.remote_device.get_adc_value(current),2)
+        curr = self.remote_device.get_adc_value(current)
+        curr = curr - 447
+        if 150 >= curr > 50:
+            curr = curr * 2.93
+        elif 250 >= curr > 150:
+            curr = curr * 2.44
+        elif 350 >= curr > 250:
+            curr = curr * 2.27
+        else:
+            curr = curr * 2.3
+        # print(curr)
+        return round(curr,2)
     
     def get_temperature_value(self):
         # t_val stands for actual temperature
