@@ -95,7 +95,7 @@ def toggle_mains(request):
             else:
                 switch_mains_value = False
 
-            with concurrent.futures.ThreadPoolExecutor() as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                 threads = [executor.submit(perform_toggle,node_name=node.name,id=node.unique_id,mains_val=switch_mains_value) for node in Slave.objects.all()]
                 for f in concurrent.futures.as_completed(threads):
                     status, id = f.result()
@@ -148,7 +148,7 @@ def dim_to(request):
 
 
 
-            with concurrent.futures.ThreadPoolExecutor() as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                 threads = [executor.submit(perform_dimming,node_name=node.name,id=node.unique_id,dim_value=dim_to_value) for node in Slave.objects.all()]
                 for f in concurrent.futures.as_completed(threads):
                     status, id = f.result()

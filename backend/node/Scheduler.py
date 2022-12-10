@@ -23,10 +23,10 @@ scheduler = BackgroundScheduler()
 # in startup :
 
 def getInsValues():
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
         threads = [executor.submit(get_curr_temp_val_async,node_name=node.name,id=node.unique_id) for node in Slave.objects.all()]
         for f in concurrent.futures.as_completed(threads):
-            id, status, curr, temp = f.result()
+            id, status, temp, curr = f.result()
             node = Slave.objects.get(unique_id=id)
             if status is True:
                 CurrentMeasurement.objects.create(SlaveId = node,currentValue = curr)

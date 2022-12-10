@@ -79,8 +79,8 @@ const StreetNode = () => {
             color="success"
             onChange={() => {
               axios
-                .get(url + "toggle/", {
-                  params: { id: id, status: !item.relay ? "on" : "off" },
+                .put(url + "toggle/", {
+                  params: { id: item.id, status: item.relay ? "off" : "on" },
                 })
                 .then((res) => {
                   setIO(item.id, "relay", !item.relay);
