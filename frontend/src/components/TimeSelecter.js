@@ -34,7 +34,7 @@ export const TimeSelecter = ({ val, idx, sch, setSch }) => {
       <div className="flex items-center justify-start p-4 rounded-md ">
         <LocalizationProvider className="" dateAdapter={AdapterDateFns}>
           <TimePicker
-            disabled={idx == 4}
+            disabled={idx == 3}
             label="End Time"
             value={endValue}
             onChange={(newValue) => {

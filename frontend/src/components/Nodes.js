@@ -380,13 +380,16 @@ const Nodes = () => {
               onClick={() => {
                 //run validation
                 setApplyloading(true);
+                setPointerEvent(true);
                 axios
                   .post(url + "setSchedule/", {
                     schedule: autoSchedule,
                   })
                   .then((res) => {
-                    if (res.data.succ == "done")
+                    //if (res.data.succ == "done")
                       setApplyloading(false);
+                      setPointerEvent(false);
+
                   });
               }}
             >
