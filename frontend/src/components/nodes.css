@@ -3,3 +3,11 @@
 .content-pointer-event-none {
     pointer-events: none;
 }
+
+.display-chart {
+    display: none;
+}
+
+.display-error {
+    display: none;
+}

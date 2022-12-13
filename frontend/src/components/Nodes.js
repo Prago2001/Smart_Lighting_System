@@ -48,6 +48,41 @@ const Nodes = () => {
 
   const handleChangeTab = (event, newValue) => {
     setTab(newValue);
+    if(newValue == 1)
+    {
+      axios.get(url + "getNodes/").then((res) => {
+        setNodes(res.data.nodes);
+        console.log(res.data.nodes);
+        console.log(nodes);
+      });
+      axios
+        .get(url + "toggle/", 
+        // {
+        //   params: {
+        //     isGlobal: true,
+        //     status: global.globalStatus ? "on" : "off",
+        //   },
+        // }
+        )
+        .then((res) => {
+          console.log(res.data.relay)
+          // setGlobalToggle(global.globalStatus);
+          setGlobalToggle(res.data.relay);
+          console.log(nodes);
+        });
+      axios
+        .get(url + "dimming/", 
+        // {
+          // params: { 
+          //   isGlobal: true, value: global.globalValue },
+        // }
+        )
+        .then((res) => {
+          // set current value
+          setGlobalDim(res.data.intensity);
+          console.log(nodes);
+        });
+    }
   };
 
   const marks = [

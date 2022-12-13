@@ -10,6 +10,8 @@ import url from "./BaseURL";
 import { Link } from "react-router-dom";
 import { useNodeContext } from "../NodeContext";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import "./nodes.css";
+import classnames from "classnames";
 
 const useStyles = makeStyles({
   root: {
@@ -25,9 +27,13 @@ const StreetNode = () => {
   const classes = useStyles();
 
   const [graphData, setGraphData] = useState({ curr: [], temp: [] });
+  const [currError, setCurrError] = useState(false);
+  const [tempError, setTempError] = useState(false);
 
   useEffect(() => {
     const insterval = setInterval(() => {
+      setCurrError(false);
+      setTempError(false);
       axios
         .get(url + "graphValues/", {
           params: { id: id },
@@ -36,8 +42,12 @@ const StreetNode = () => {
           setGraphData(res.data);
           setInstValues(id, res.data.curr[10][1], res.data.temp[10][1]);
           console.log(res.data);
+        })
+        .catch((error) => {
+          setCurrError(true);
+          setTempError(true);
         });
-    }, 7000);
+    }, 15000);
     return () => clearInterval(insterval);
   }, []);
 
@@ -199,8 +209,12 @@ const StreetNode = () => {
             Light Intensity
           </div>
         </div>
-        <div className="flex grid items-center justify-center col-span-2 mx-20 ">
-          <Chart
+        <div className="flex grid items-center justify-center col-span-2 mx-20 ">      
+            {/* <div className={classnames("flex text-gray-500 font-bold items-center justify-center display:none",{"display-error": currError})}> */}
+            {currError && (<div className={classnames("flex text-gray-500 font-bold items-center justify-center display:none")}>
+              Wait for 2 minutes till the values populate...
+            </div>)}
+          {!currError && (<Chart
             width={"550px"}
             height={"300px"}
             chartType="LineChart"
@@ -230,13 +244,17 @@ const StreetNode = () => {
               },
             }}
             rootProps={{ "data-testid": "1" }}
-          />
+          />)}
           <div className="flex text-gray-500 font-bold items-center justify-center ">
             Current Flowing
           </div>
         </div>
         <div className="flex grid items-center justify-center col-span-2 mx-20 ">
-          <Chart
+            {/* <div className={classnames("flex text-gray-500 font-bold items-center justify-center",{"display-error": tempError})}> */}
+            {tempError && (<div className={classnames("flex text-gray-500 font-bold items-center justify-center")}>
+              Wait for 2 minutes till the values populate...
+            </div>)}
+          {!tempError && (<Chart
             width={"550px"}
             height={"300px"}
             chartType="LineChart"
@@ -266,7 +284,7 @@ const StreetNode = () => {
               },
             }}
             rootProps={{ "data-testid": "1" }}
-          />
+          />)}
           <div className="flex text-gray-500 font-bold items-center justify-center ">
             Temperature
           </div>

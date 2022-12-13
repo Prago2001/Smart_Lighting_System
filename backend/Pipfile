@@ -16,6 +16,7 @@ markdown = "*"
 apscheduler = "*"
 astral = "*"
 python-dateutil = "*"
+django-extensions = "*"
 
 [requires]
 python_version = "3.8"
