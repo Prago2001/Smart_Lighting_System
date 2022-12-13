@@ -56,10 +56,15 @@ def discover_remote_nodes(request):
             node.is_active = False
             node.save()
         else:
+            temp_val = remote.get_temperature_value()
+            curr_val = remote.get_current_value()
             node.is_active = True
-            node.current = remote.get_current_value()
-            node.temperature = remote.get_temperature_value()
+            node.current = curr_val
+            node.temperature = temp_val
             node.save()
+
+            CurrentMeasurement.objects.create(SlaveId = node,currentValue = curr_val)
+            TemperatureMeasurement.objects.create(SlaveId = node,temperatureValue = temp_val)
         
         node_data = {
             'id' : node.name,
