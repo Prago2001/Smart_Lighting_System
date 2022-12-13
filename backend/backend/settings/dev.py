@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'node.apps.NodeConfig',
     'corsheaders',
     'rest_framework',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
