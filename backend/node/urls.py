@@ -13,5 +13,6 @@ urlpatterns = [
     path('instValues/',views.getInstValues),
     path('graphValues/',views.getGraphValues),
     path('setTelemetry/',views.enable_disable_telemetry),
-    path('activateSchedule/',views.enable_disable_schedule)
+    path('activateSchedule/',views.enable_disable_schedule),
+    path('deleteNode/',views.delete_node)
 ]

@@ -380,3 +380,24 @@ def enable_disable_schedule(request):
             print("name: %s, trigger: %s, next run: %s, handler: %s" % (job.name, job.trigger, job.next_run_time, job.func))
         
         return Response(data={"message":"Success"})
+
+@api_view(['DELETE'])
+def delete_node(request):
+    request_data = json.loads(request.body)
+    params = request_data['params']
+    id = params['id']
+    nodeObject = Slave.objects.get(name=id)
+
+    try:
+        nodeObject.delete()
+    except Exception as e:
+        print(str(e))
+    
+    try:
+        remote = MASTER.network.get_device_by_node_id(id)
+        MASTER.network.remove_device(remote)
+    except Exception as e:
+        print(str(e))
+    
+    return Response(data={"message":"Success"})
+
