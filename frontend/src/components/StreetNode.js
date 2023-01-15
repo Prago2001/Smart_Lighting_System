@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { Typography, Slider, Switch } from "@mui/material";
+import { useParams, useHistory } from "react-router-dom";
+import { Typography, Slider, Switch, Button, Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import FlashOnIcon from "@mui/icons-material/FlashOn";
 import DeviceThermostatIcon from "@mui/icons-material/DeviceThermostat";
@@ -29,6 +29,9 @@ const StreetNode = () => {
   const [graphData, setGraphData] = useState({ curr: [], temp: [] });
   const [currError, setCurrError] = useState(false);
   const [tempError, setTempError] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const history = useHistory();
 
   useEffect(() => {
     const insterval = setInterval(() => {
@@ -290,6 +293,65 @@ const StreetNode = () => {
           </div>
         </div>
       </div>
+
+      <div className="flex grid grid-flow-row grid-cols-9 gap-4 grid-rows-1 p-6 bg-opacity-25 rounded-md">
+          <Button
+              className="col-start-8 col-span-2"
+              variant="contained"
+              // sx={buttonSx}
+              //disabled={syncloading}
+              backgroundColor="red"
+              onClick={() => {
+                setOpen(true);
+                // axios
+                //   .delete(url + "deleteNode/",{
+                //     params: {
+                //       id: id,
+                //     },
+                //   }
+                //   )
+                //   ;
+              }}
+            >
+              Delete Node
+            </Button>
+            <Dialog 
+              open={open}
+              onClose={() => {setOpen(false)}}
+              aria-labelledby="alert-dialog-title"
+              aria-describedby="alert-dialog-description"
+            >
+              <DialogTitle id="alert-dialog-title">
+                {"ALERT: Delete Node?"}
+              </DialogTitle>
+              <DialogContent>
+                <DialogContentText id="alert-dialog-description">
+                  System will delete all node related data.
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => {setOpen(false)}}>NO</Button>
+                <Button onClick={() => {
+                  axios
+                  .delete("deleteNode/",{
+                    params: {
+                      id: item.id,
+                    },
+                  }
+                  )
+                  .then((res) => {
+                    setOpen(false);
+                    history.push("/");
+                });
+                // history.push("/");
+                }} 
+                autoFocus>
+                  YES
+                </Button>
+              </DialogActions>
+            </Dialog>
+            
+          </div>
     </div>
   );
 };
