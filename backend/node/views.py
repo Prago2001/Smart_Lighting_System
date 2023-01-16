@@ -141,7 +141,11 @@ def dim_to(request):
     # print(request.method)
     if request.method == "GET":
         node = Slave.objects.first()
-        return Response({'intensity': node.dim_val})
+        if node is None:
+            # To handle all deleted nodes
+            return Response({'intensity': 25})
+        else:
+            return Response({'intensity': node.dim_val})
 
     elif request.method == "PUT":
         start_time = time.time()
@@ -381,7 +385,7 @@ def enable_disable_schedule(request):
         
         return Response(data={"message":"Success"})
 
-@api_view(['DELETE'])
+@api_view(['PUT'])
 def delete_node(request):
     request_data = json.loads(request.body)
     params = request_data['params']

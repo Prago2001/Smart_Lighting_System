@@ -333,7 +333,7 @@ const StreetNode = () => {
                 <Button onClick={() => {setOpen(false)}}>NO</Button>
                 <Button onClick={() => {
                   axios
-                  .delete("deleteNode/",{
+                  .put(url + "deleteNode/",{
                     params: {
                       id: item.id,
                     },
