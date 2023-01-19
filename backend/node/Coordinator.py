@@ -5,6 +5,38 @@ import concurrent.futures
 from .models import Slave
 from .Remote import Remote
 
+
+
+def retry_mains(nodes,mains_val):
+    for node_name,id in nodes.items():
+        remote = MASTER.get_node(node_name)
+        node = Slave.objects.get(unique_id=id)
+        if remote is not None:
+            remote.set_mains_value(mains_val)
+            node.mains_val = mains_val
+            node.is_active = True
+            print(f"Switching {mains_val} for {node_name}")
+        else:
+            print(f"Unable to toggle {node.name}")
+            node.is_active = False
+        node.save()
+        sleep(1)
+
+def retry_dim(nodes,dim_val):
+    for node_name,id in nodes.items():
+        remote = MASTER.get_node(node_name)
+        node = Slave.objects.get(unique_id=id)
+        if remote is not None:
+            remote.set_dim_value(dim_val)
+            node.dim_val = dim_val
+            node.is_active = True
+            print(f"Switching {dim_val} for {node_name}")
+        else:
+            print(f"Unable to dim {node.name}")
+            node.is_active = False
+        node.save()
+        sleep(1) 
+
 def perform_dimming(node_name,id,dim_value):
     print(f"Starting thread in {node_name}")
     counter = 0
@@ -16,7 +48,10 @@ def perform_dimming(node_name,id,dim_value):
             print(f"Switching {dim_value} for {node_name}")
             return (True,id)
         counter += 1
-        sleep(1)
+        if counter < 2:
+            sleep(1)
+        else:
+            sleep(3)
         
     
     return (False,id)
@@ -31,7 +66,10 @@ def perform_toggle(node_name,id,mains_val):
             print(f"Toggling to {mains_val} for {node_name}")
             return (True,id)
         counter += 1
-        sleep(1)
+        if counter < 2:
+            sleep(1)
+        else:
+            sleep(3)
     
     return (False,id)
 
@@ -76,7 +114,7 @@ class Coordinator(metaclass=Singleton):
         self.nodes : List[Remote] = []
         self.network.start_discovery_process()
         while self.network.is_discovery_running():
-            sleep(0.1)
+            sleep(3)
         for node in self.network.get_devices():
             print(node)
             try:
@@ -93,8 +131,9 @@ class Coordinator(metaclass=Singleton):
             return Remote(node=node)
     
     def make_all_on(self):
+        failed_nodes = {}
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            threads = [executor.submit(perform_toggle,node_name=node.name,id=node.unique_id,mains_val=True) for node in Slave.objects.all()]
+            threads = [executor.submit(perform_toggle,node_name=node.name,id=node.unique_id,mains_val=True) for node in Slave.objects.all().order_by('is_active')]
             for f in concurrent.futures.as_completed(threads):
                 status, id = f.result()
                 node = Slave.objects.get(unique_id=id)
@@ -104,12 +143,15 @@ class Coordinator(metaclass=Singleton):
                 else:
                     print(f"Unable to toggle {node.name}")
                     node.is_active = False
+                    failed_nodes[node.name] = node.unique_id
                 node.save()
-        return
+        return failed_nodes
+            
     
     def make_all_off(self):
+        failed_nodes = {}
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            threads = [executor.submit(perform_toggle,node_name=node.name,id=node.unique_id,mains_val=False) for node in Slave.objects.all()]
+            threads = [executor.submit(perform_toggle,node_name=node.name,id=node.unique_id,mains_val=False) for node in Slave.objects.all().order_by('is_active')]
             for f in concurrent.futures.as_completed(threads):
                 status, id = f.result()
                 node = Slave.objects.get(unique_id=id)
@@ -119,12 +161,14 @@ class Coordinator(metaclass=Singleton):
                 else:
                     print(f"Unable to toggle {node.name}")
                     node.is_active = False
+                    failed_nodes[node.name] = node.unique_id
                 node.save()
-        return 
+        return failed_nodes
     
     def set_dim_value(self,dim_value):
+        failed_nodes = {}
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            threads = [executor.submit(perform_dimming,node_name=node.name,id=node.unique_id,dim_value=dim_value) for node in Slave.objects.all()]
+            threads = [executor.submit(perform_dimming,node_name=node.name,id=node.unique_id,dim_value=dim_value) for node in Slave.objects.all().order_by('is_active')]
             for f in concurrent.futures.as_completed(threads):
                 status, id = f.result()
                 node = Slave.objects.get(unique_id=id)
@@ -134,7 +178,8 @@ class Coordinator(metaclass=Singleton):
                 else:
                     print(f"Unable to dim {node.name}")
                     node.is_active = False
+                    failed_nodes[node.name] = node.unique_id
                 node.save()
-        return None
+        return failed_nodes
 
 MASTER = Coordinator()

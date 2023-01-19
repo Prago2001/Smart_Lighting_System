@@ -79,8 +79,7 @@ def fetchSunModel() :
                     trigger='cron',
                     id = "sync_sunset",
                     hour = s['sunrise'].hour,
-                    minute = s['sunrise'].minute,
-                    second = 50,
+                    minute = s['sunrise'].minute + 1,
                     timezone = 'Asia/Kolkata',
                     replace_existing=True,
                     name='sync_auto'
@@ -160,8 +159,7 @@ def add_sync_jobs():
                     trigger='cron',
                     id = id,
                     hour = slot.start.hour,
-                    minute = slot.start.minute,
-                    second = 50,
+                    minute = slot.start.minute + 1,
                     timezone = 'Asia/Kolkata',
                     replace_existing=True,
                     name='sync_auto'

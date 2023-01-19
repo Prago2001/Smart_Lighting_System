@@ -4,12 +4,12 @@ from rest_framework.response import Response
 from .Scheduler import fetchSunModel, scheduler, function_mapping, sync_to_schedule
 import pytz
 from dateutil import parser
-# from datetime import date, datetime
+from datetime import timedelta
 import datetime
 from .models import CurrentMeasurement, Schedule, Slave, Slot, TemperatureMeasurement
 import time
 import concurrent.futures
-from .Coordinator import perform_dimming,perform_toggle
+from .Coordinator import perform_dimming,perform_toggle,retry_mains, retry_dim
 from apscheduler.job import Job
 
 try:
@@ -99,9 +99,11 @@ def toggle_mains(request):
                 switch_mains_value = True
             else:
                 switch_mains_value = False
+            
+            failed_nodes = {}
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                threads = [executor.submit(perform_toggle,node_name=node.name,id=node.unique_id,mains_val=switch_mains_value) for node in Slave.objects.all()]
+                threads = [executor.submit(perform_toggle,node_name=node.name,id=node.unique_id,mains_val=switch_mains_value) for node in Slave.objects.all().order_by('is_active')]
                 for f in concurrent.futures.as_completed(threads):
                     status, id = f.result()
                     node = Slave.objects.get(unique_id=id)
@@ -111,8 +113,24 @@ def toggle_mains(request):
                     else:
                         print(f"Unable to toggle {node.name}")
                         node.is_active = False
+                        failed_nodes[node.name] = node.unique_id
                     node.save()
             print(f"Time needed for execution {time.time() - start_time}")
+            if len(failed_nodes) == 0:
+                return Response({"operation":True})
+            else:
+                scheduler.add_job(
+                func=retry_mains,
+                trigger='date',
+                args=[failed_nodes,switch_mains_value,],
+                id='retry_manual_mains',
+                name="Retrying mains operation in manual mode",
+                replace_existing=True,
+                run_date=datetime.datetime.now() + timedelta(seconds=15),
+                timezone = 'Asia/Kolkata',
+                )
+                return Response({"operation":False,"nodes":failed_nodes.keys()})
+            
         else:
             id = params['id']
             status = params['status']
@@ -155,10 +173,10 @@ def dim_to(request):
         if 'isGlobal' in params and params['isGlobal'] is True:
             dim_to_value = int(params["value"])
 
-
+            failed_nodes = {}
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                threads = [executor.submit(perform_dimming,node_name=node.name,id=node.unique_id,dim_value=dim_to_value) for node in Slave.objects.all()]
+                threads = [executor.submit(perform_dimming,node_name=node.name,id=node.unique_id,dim_value=dim_to_value) for node in Slave.objects.all().order_by('is_active')]
                 for f in concurrent.futures.as_completed(threads):
                     status, id = f.result()
                     node = Slave.objects.get(unique_id=id)
@@ -168,8 +186,23 @@ def dim_to(request):
                     else:
                         print(f"Unable to dim {node.name}")
                         node.is_active = False
+                        failed_nodes[node.name] = node.unique_id
                     node.save()
             print(f"Time needed for execution {time.time() - start_time}")
+            if len(failed_nodes) == 0:
+                return Response({"operation":True})
+            else:
+                scheduler.add_job(
+                func=retry_dim,
+                trigger='date',
+                args=[failed_nodes,dim_to_value,],
+                id='retry_manual_dim',
+                name="Retrying dim operation in manual mode",
+                replace_existing=True,
+                run_date=datetime.datetime.now() + timedelta(seconds=15),
+                timezone = 'Asia/Kolkata',
+                )
+                return Response({"operation":False,"nodes":failed_nodes.keys()})
         else:
             id = params["id"]
             dim_to_value = params["value"]
@@ -270,7 +303,17 @@ def syncToSchedule(request):
     sunrise = MASTER.SunRise
 
     if current_time >= sunset or current_time < sunrise:
-        MASTER.make_all_on()
+        failed_nodes = MASTER.make_all_on()
+        scheduler.add_job(
+            func=retry_mains,
+            trigger='date',
+            args=[failed_nodes,True,],
+            id='retry_manual_mains',
+            name="Retrying mains operation in manual mode",
+            replace_existing=True,
+            run_date=datetime.datetime.now() + timedelta(seconds=15),
+            timezone = 'Asia/Kolkata',
+        )
         current_schedule = Schedule.objects.get(currently_active = True)
         slots = Slot.objects.filter(schedule=current_schedule).order_by('id')
 
@@ -279,12 +322,44 @@ def syncToSchedule(request):
             end = slot.end.strftime("%H:%M")
             if start < end:
                 if start <= current_time < end:
-                    MASTER.set_dim_value(slot.intensity)
+                    failed_nodes = MASTER.set_dim_value(slot.intensity)
+                    scheduler.add_job(
+                        func=retry_dim,
+                        trigger='date',
+                        args=[failed_nodes,slot.intensity],
+                        id='retry_manual_dim',
+                        name="Retrying dim operation in manual mode",
+                        replace_existing=True,
+                        run_date=datetime.datetime.now() + timedelta(seconds=15),
+                        timezone = 'Asia/Kolkata',
+                    )
             else:
                 if current_time >= start or current_time < end:
-                    MASTER.set_dim_value(slot.intensity)
+                    failed_nodes = MASTER.set_dim_value(slot.intensity)
+                    scheduler.add_job(
+                        func=retry_dim,
+                        trigger='date',
+                        args=[failed_nodes,slot.intensity],
+                        id='retry_manual_dim',
+                        name="Retrying dim operation in manual mode",
+                        replace_existing=True,
+                        run_date=datetime.datetime.now() + timedelta(seconds=15),
+                        timezone = 'Asia/Kolkata',
+                    )
+            
     else:
-        MASTER.make_all_off()
+        failed_nodes = MASTER.make_all_off()
+        scheduler.add_job(
+            func=retry_mains,
+            trigger='date',
+            args=[failed_nodes,False,],
+            id='retry_manual_mains',
+            name="Retrying mains operation in manual mode",
+            replace_existing=True,
+            run_date=datetime.now() + timedelta(seconds=15),
+            timezone = 'Asia/Kolkata',
+        )
+        
     return Response({"message":"Success"})
 
 @api_view(['GET'])
