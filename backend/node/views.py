@@ -23,7 +23,7 @@ except Exception as e:
 @api_view(['GET'])
 def get_nodes(request):
     data_list = []
-    for node in Slave.objects.all():
+    for node in Slave.objects.all().order_by('-is_active'):
         node_data = {
             'id' : node.name,
             'relay' : node.mains_val,
@@ -33,6 +33,7 @@ def get_nodes(request):
             'is_active' : node.is_active,
         }
         data_list.append(node_data)
+        print(data_list)
     return Response({'nodes': data_list})
 
 @api_view(['GET'])
@@ -80,14 +81,20 @@ def discover_remote_nodes(request):
 @api_view(['GET','POST','PUT'])
 def toggle_mains(request):
     if request.method == "GET":
-        data_list = []
-        toggle_status = []
-        for node in Slave.objects.all():
-            toggle_status.append(node.mains_val)
-        if all(toggle_status) is True:
-            return Response({'relay': True})
-        else:
+        node = Slave.objects.all().order_by('is_active').first()
+        if node is None:
+            # To handle all deleted nodes
             return Response({'relay': False})
+        else:
+            return Response({'relay': node.mains_val})
+        # data_list = []
+        # toggle_status = []
+        # for node in Slave.objects.all().filter('is_active'):
+        #     toggle_status.append(node.mains_val)
+        # if all(toggle_status) is True:
+        #     return Response({'relay': True})
+        # else:
+        #     return Response({'relay': False})
     elif request.method == "PUT":
         start_time = time.time()
         request_data = json.loads(request.body)
@@ -158,7 +165,7 @@ def toggle_mains(request):
 def dim_to(request):
     # print(request.method)
     if request.method == "GET":
-        node = Slave.objects.first()
+        node = Slave.objects.all().order_by('is_active').first()
         if node is None:
             # To handle all deleted nodes
             return Response({'intensity': 25})

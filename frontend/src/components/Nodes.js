@@ -50,11 +50,6 @@ const Nodes = () => {
     setTab(newValue);
     if(newValue == 1)
     {
-      axios.get(url + "getNodes/").then((res) => {
-        setNodes(res.data.nodes);
-        console.log(res.data.nodes);
-        console.log(nodes);
-      });
       axios
         .get(url + "toggle/", 
         // {
@@ -65,10 +60,9 @@ const Nodes = () => {
         // }
         )
         .then((res) => {
-          console.log(res.data.relay)
+          // console.log(res.data.relay)
           // setGlobalToggle(global.globalStatus);
           setGlobalToggle(res.data.relay);
-          console.log(nodes);
         });
       axios
         .get(url + "dimming/", 
@@ -80,8 +74,13 @@ const Nodes = () => {
         .then((res) => {
           // set current value
           setGlobalDim(res.data.intensity);
-          console.log(nodes);
+          // console.log(nodes);
         });
+      axios.get(url + "getNodes/").then((res) => {
+        setNodes(res.data.nodes);
+        console.log(res.data.nodes);
+        console.log(nodes);
+      });
     }
   };
 
@@ -127,9 +126,15 @@ const Nodes = () => {
         })
         .then((res) => {
           setGlobalDim(newValue);
-          console.log(nodes);
+          // console.log(nodes);
           setPointerEvent(false);
+          axios.get(url + "getNodes/").then((res) => {
+            setNodes(res.data.nodes);
+            // console.log(res.data.nodes);
+            // console.log(nodes);
+          });
         });
+      
     }
   };
   useEffect(() => {
@@ -526,10 +531,16 @@ const Nodes = () => {
                     })
                     .then((res) => {
                       setGlobalToggle(!global.globalStatus);
-                      console.log(nodes);
+                      // console.log(nodes);
                       setPointerEvent(false);
                       setLoadingOnOff(false);
+                      axios.get(url + "getNodes/").then((res) => {
+                        setNodes(res.data.nodes);
+                        // console.log(res.data.nodes);
+                        // console.log(nodes);
+                      });
                     });
+                  
                 }}
                 color={global.globalStatus ? "success" : "error"}
                 variant={global.globalStatus ? "contained" : "outlined"}
