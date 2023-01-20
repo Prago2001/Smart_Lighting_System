@@ -17,6 +17,9 @@ import AddCircleIcon from "@mui/icons-material/AddCircle";
 import HourglassBottomIcon from "@mui/icons-material/HourglassBottom";
 import "./nodes.css";
 import classnames from "classnames";
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
+import Fade from "@mui/material/Fade";
 
 const Nodes = () => {
   const {
@@ -45,6 +48,7 @@ const Nodes = () => {
   const [scheduleStatus, setScheduleStatus] = useState(true);
   // AlerDialog open or close?
   const [open, setOpen] = useState(false);
+  const [displaySuccessTab,setDisplaySuccessTab] = useState(false);
 
   const handleChangeTab = (event, newValue) => {
     setTab(newValue);
@@ -126,12 +130,14 @@ const Nodes = () => {
         })
         .then((res) => {
           setGlobalDim(newValue);
+          setDisplaySuccessTab(true);
           // console.log(nodes);
           setPointerEvent(false);
           axios.get(url + "getNodes/").then((res) => {
             setNodes(res.data.nodes);
             // console.log(res.data.nodes);
             // console.log(nodes);
+            
           });
         });
       
@@ -243,11 +249,31 @@ const Nodes = () => {
   return (
     // <div className="lg:container md:mx-auto mt-8 z-0">
     <div className={classnames("lg:container md:mx-auto mt-8 z-0", {"content-pointer-event-none": pointerEvent})}>
-      <div className="flex grid grid-flow-col grid-cols-6 gap-4 items-center m-8 mx-10 p-6 bg-gray-200 rounded-md  ">
-        <div className="flex col-span-4 items-center justify-start text-2xl text-primary font-bold ">
+      <div className="flex grid grid-flow-row grid-rows-2 items-center m-2 mx-10">
+        <div className="flex col-span-4 items-center justify-start text-2xl text-primary font-bold bg-gray-200 p-3 rounded-md">
           Area Name
         </div>
+        <div className="flex col-span-4 justify-start text-2xl text-primary font-bold">
+          <Fade
+            sx={{ width: 1,fontSize:16, fontWeight: 'bold',}}
+            in={displaySuccessTab}
+            timeout={{ enter: 0, exit: 0 }} 
+            addEndListener={() => {
+                setTimeout(() => {
+                setDisplaySuccessTab(false);
+                }, 4000);
+            }}
+          >
+            <Alert severity="success">
+                <AlertTitle>Success</AlertTitle>
+                Operation was successful on all Street Lights!
+            </Alert>
+          </Fade>
+        </div>
       </div>
+      
+        
+
       <Box className="p-6 m-4">
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs
@@ -530,6 +556,7 @@ const Nodes = () => {
                       },
                     })
                     .then((res) => {
+                      setDisplaySuccessTab(true);
                       setGlobalToggle(!global.globalStatus);
                       // console.log(nodes);
                       setPointerEvent(false);
@@ -539,6 +566,7 @@ const Nodes = () => {
                         // console.log(res.data.nodes);
                         // console.log(nodes);
                       });
+                      
                     });
                   
                 }}

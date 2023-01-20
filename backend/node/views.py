@@ -33,7 +33,6 @@ def get_nodes(request):
             'is_active' : node.is_active,
         }
         data_list.append(node_data)
-        print(data_list)
     return Response({'nodes': data_list})
 
 @api_view(['GET'])
