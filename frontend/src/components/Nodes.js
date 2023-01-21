@@ -49,6 +49,10 @@ const Nodes = () => {
   // AlerDialog open or close?
   const [open, setOpen] = useState(false);
   const [displaySuccessTab,setDisplaySuccessTab] = useState(false);
+  const [retryAlert,setRetryAlert] = useState(false);
+  const [retryNodes,setRetryNodes] = useState([]);
+  const [displayAlertTab,setDisplayAlertTab] = useState(false);
+  const [failedNodes,setFailedNodes] = useState([]);
 
   const handleChangeTab = (event, newValue) => {
     setTab(newValue);
@@ -122,6 +126,8 @@ const Nodes = () => {
       // current dimming value
       console.log(newValue);
       setPointerEvent(true);
+      setLoadingOnOff(true);
+      
       axios
         .put(url + "dimming/", {
           params: { 
@@ -130,26 +136,39 @@ const Nodes = () => {
         })
         .then((res) => {
           setGlobalDim(newValue);
-          setDisplaySuccessTab(true);
-          // console.log(nodes);
+          setLoadingOnOff(false);
           setPointerEvent(false);
-          axios.get(url + "getNodes/").then((res) => {
-            setNodes(res.data.nodes);
-            // console.log(res.data.nodes);
-            // console.log(nodes);
-            
-          });
+          if(res.data.operation == false){
+            setRetryAlert(true);
+            setRetryNodes(res.data.nodes);
+            axios.get(url + "getRetryJobStatus/",{
+            }).then((res) => {
+              // console.log('Retry job done...')
+              setRetryAlert(false);
+              if(res.data.operation == false){
+                setFailedNodes(res.data.nodes);
+                setDisplayAlertTab(true);
+              }
+              else{
+                setDisplaySuccessTab(true);
+              }
+              axios.get(url + "getNodes/").then((res) => {
+                setNodes(res.data.nodes);
+              });
+              
+            })
+          }
+          else{
+            setDisplaySuccessTab(true);
+            axios.get(url + "getNodes/").then((res) => {
+              setNodes(res.data.nodes);
+            });
+          }
         });
       
     }
   };
-  useEffect(() => {
-    axios.get(url + "getNodes/").then((res) => {
-      setNodes(res.data.nodes);
-      console.log(res.data.nodes);
-      console.log(nodes);
-    });
-  }, []);
+  
 
   useEffect(() => {
     axios
@@ -189,6 +208,13 @@ const Nodes = () => {
 
     }
   }, [global.isGlobal]);
+  useEffect(() => {
+    axios.get(url + "getNodes/").then((res) => {
+      setNodes(res.data.nodes);
+      console.log(res.data.nodes);
+      console.log(nodes);
+    });
+  }, []);
 
   useEffect(() => {
     axios.get(url + "activateSchedule/")
@@ -249,26 +275,86 @@ const Nodes = () => {
   return (
     // <div className="lg:container md:mx-auto mt-8 z-0">
     <div className={classnames("lg:container md:mx-auto mt-8 z-0", {"content-pointer-event-none": pointerEvent})}>
+      <Dialog
+        open={retryAlert}
+        sx = {{
+          justifyContent: "flex-start",
+          alignItems: "flex-start",
+          fontSize:16,
+          fontWeight: 'bold',
+        }}
+      >
+        <DialogTitle>
+          {"Operation failed for following nodes"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            <ul class='list-disc'>
+              {retryNodes.map(id => <li>{id}</li>)}
+            </ul>
+          </DialogContentText>
+          <br></br>
+          <DialogContentText>
+            <strong>Please Wait</strong>
+          </DialogContentText>
+          <DialogContentText>
+            Retrying automatically in few moments...
+          </DialogContentText>
+            <br></br>
+            <CircularProgress />
+        </DialogContent>
+      </Dialog>
       <div className="flex grid grid-flow-row grid-rows-2 items-center m-2 mx-10">
         <div className="flex col-span-4 items-center justify-start text-2xl text-primary font-bold bg-gray-200 p-3 rounded-md">
           Area Name
         </div>
         <div className="flex col-span-4 justify-start text-2xl text-primary font-bold">
-          <Fade
-            sx={{ width: 1,fontSize:16, fontWeight: 'bold',}}
-            in={displaySuccessTab}
-            timeout={{ enter: 0, exit: 0 }} 
-            addEndListener={() => {
-                setTimeout(() => {
-                setDisplaySuccessTab(false);
-                }, 4000);
-            }}
-          >
-            <Alert severity="success">
-                <AlertTitle>Success</AlertTitle>
-                Operation was successful on all Street Lights!
-            </Alert>
-          </Fade>
+          {
+            (() => {
+              if(displaySuccessTab == true){
+                console.log(displaySuccessTab)
+                return(
+                  <Fade
+                    sx={{ width: 1,fontSize:16, fontWeight: 'bold',}}
+                    in={displaySuccessTab}
+                    timeout={{ enter: 0, exit: 0 }} 
+                    addEndListener={() => {
+                      setTimeout(() => {
+                      setDisplaySuccessTab(false);
+                    }, 4000);
+                    }}
+                  >
+                    <Alert severity="success">
+                      <AlertTitle>Success</AlertTitle>
+                      Operation was successful on all Street Lights!
+                    </Alert>
+                  </Fade>
+                )
+              }
+              else if(displayAlertTab == true){
+                return(
+                  <Fade
+                    sx={{ width: 1,fontSize:16, fontWeight: 'bold',}}
+                    in={displayAlertTab}
+                    timeout={{ enter: 0, exit: 0 }} 
+                    addEndListener={() => {
+                        setTimeout(() => {
+                        setDisplayAlertTab(false);
+                        }, 6000);
+                    }}
+                  >
+                    <Alert severity="error">
+                        <AlertTitle>Error</AlertTitle>
+                        Operation failed for following lights:
+                        <ul class='list-disc'>
+                          {failedNodes.map(id => <li>{id}</li>)}
+                        </ul>
+                    </Alert>
+                  </Fade>
+                )
+              }
+            })()
+          }
         </div>
       </div>
       
@@ -419,8 +505,21 @@ const Nodes = () => {
               onClick={() => {
                 setSyncloading(true);
                 axios.get(url + "sync/").then((res) => {
-                  setSyncloading(false);
-                });
+                  
+                  axios.get(url + "getRetryJobStatus/",{
+
+                    }).then((res) => {
+                    // console.log('Retry job done...')
+                      if(res.data.operation == false){
+                        setFailedNodes(res.data.nodes);
+                        setDisplayAlertTab(true);
+                      }
+                      else{
+                        setDisplaySuccessTab(true);
+                      }
+                      setSyncloading(false);
+                    });
+                  });
               }}
             >
               Sync with Auto
@@ -556,16 +655,39 @@ const Nodes = () => {
                       },
                     })
                     .then((res) => {
-                      setDisplaySuccessTab(true);
+                      
                       setGlobalToggle(!global.globalStatus);
                       // console.log(nodes);
                       setPointerEvent(false);
                       setLoadingOnOff(false);
-                      axios.get(url + "getNodes/").then((res) => {
-                        setNodes(res.data.nodes);
-                        // console.log(res.data.nodes);
-                        // console.log(nodes);
-                      });
+                      console.log(res.data.nodes)
+                      if(res.data.operation == false){
+                        setRetryAlert(true);
+                        setRetryNodes(res.data.nodes);
+                        console.log(retryAlert);
+                        axios.get(url + "getRetryJobStatus/",{
+                        }).then((res) => {
+                          // console.log('Retry job done...')
+                          if(res.data.operation == false){
+                            setFailedNodes(res.data.nodes);
+                            setDisplayAlertTab(true);
+                          }
+                          else{
+                            setDisplaySuccessTab(true);
+                          }
+                          axios.get(url + "getNodes/").then((res) => {
+                            setNodes(res.data.nodes);
+                          });
+                          setRetryAlert(false);
+                        })
+                      }
+                      else{
+                        setDisplaySuccessTab(true);
+                        axios.get(url + "getNodes/").then((res) => {
+                          setNodes(res.data.nodes);
+                        });
+                      }
+                      
                       
                     });
                   
