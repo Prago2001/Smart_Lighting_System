@@ -20,6 +20,12 @@ import classnames from "classnames";
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Fade from "@mui/material/Fade";
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+
+
+
+
 
 const Nodes = () => {
   const {
@@ -127,7 +133,8 @@ const Nodes = () => {
       console.log(newValue);
       setPointerEvent(true);
       setLoadingOnOff(true);
-      
+      setDisplayAlertTab(false);
+      setDisplaySuccessTab(false);
       axios
         .put(url + "dimming/", {
           params: { 
@@ -138,6 +145,7 @@ const Nodes = () => {
           setGlobalDim(newValue);
           setLoadingOnOff(false);
           setPointerEvent(false);
+          
           if(res.data.operation == false){
             setRetryAlert(true);
             setRetryNodes(res.data.nodes);
@@ -312,23 +320,31 @@ const Nodes = () => {
           {
             (() => {
               if(displaySuccessTab == true){
-                console.log(displaySuccessTab)
                 return(
                   <Fade
-                    sx={{ width: 1,fontSize:16, fontWeight: 'bold',}}
-                    in={displaySuccessTab}
-                    timeout={{ enter: 0, exit: 0 }} 
-                    addEndListener={() => {
-                      setTimeout(() => {
-                      setDisplaySuccessTab(false);
-                    }, 4000);
-                    }}
-                  >
-                    <Alert severity="success">
-                      <AlertTitle>Success</AlertTitle>
-                      Operation was successful on all Street Lights!
-                    </Alert>
-                  </Fade>
+                      sx={{ width: 1,fontSize:16, fontWeight: 'bold',}}
+                      in={displaySuccessTab}
+                      timeout={{ enter: 0, exit: 100 }} 
+                    >
+                      <Alert 
+                        severity="success"
+                        action={
+                          <IconButton
+                            aria-label="close"
+                            color="inherit"
+                            size="small"
+                            onClick={() => {
+                              setDisplaySuccessTab(false);
+                            }}
+                          >
+                            <CloseIcon />
+                          </IconButton>
+                        }
+                      >
+                        <AlertTitle>Success</AlertTitle>
+                        Operation was successful on all Street Lights!
+                      </Alert>
+                    </Fade>
                 )
               }
               else if(displayAlertTab == true){
@@ -337,13 +353,22 @@ const Nodes = () => {
                     sx={{ width: 1,fontSize:16, fontWeight: 'bold',}}
                     in={displayAlertTab}
                     timeout={{ enter: 0, exit: 0 }} 
-                    addEndListener={() => {
-                        setTimeout(() => {
-                        setDisplayAlertTab(false);
-                        }, 6000);
-                    }}
                   >
-                    <Alert severity="error">
+                    <Alert 
+                      severity="error"
+                      action={
+                        <IconButton
+                            aria-label="close"
+                            color="inherit"
+                            size="small"
+                            onClick={() => {
+                              setDisplayAlertTab(false);
+                            }}
+                          >
+                            <CloseIcon />
+                          </IconButton>
+                      }
+                    >
                         <AlertTitle>Error</AlertTitle>
                         Operation failed for following lights:
                         <ul class='list-disc'>
@@ -504,6 +529,8 @@ const Nodes = () => {
               disabled={syncloading || !scheduleStatus}
               onClick={() => {
                 setSyncloading(true);
+                setDisplayAlertTab(false);
+                setDisplaySuccessTab(false);
                 axios.get(url + "sync/").then((res) => {
                   
                   axios.get(url + "getRetryJobStatus/",{
@@ -647,6 +674,8 @@ const Nodes = () => {
                 onClick={() => {
                   setPointerEvent(true);
                   setLoadingOnOff(true);
+                  setDisplayAlertTab(false);
+                  setDisplaySuccessTab(false);
                   axios
                     .put(url + "toggle/", {
                       params: {
@@ -660,6 +689,7 @@ const Nodes = () => {
                       // console.log(nodes);
                       setPointerEvent(false);
                       setLoadingOnOff(false);
+                      
                       console.log(res.data.nodes)
                       if(res.data.operation == false){
                         setRetryAlert(true);
