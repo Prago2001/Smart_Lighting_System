@@ -154,13 +154,13 @@ def toggle_mains(request):
                 node.is_active = False
                 node.mains_val = switch_mains_value
                 node.save()
-                return Response({"message":f"Node {node.name} is inactive"})
+                return Response({"operation":False})
             else:
                 node.is_active = True
                 remote.set_mains_value(switch_mains_value)
                 node.mains_val = switch_mains_value
                 node.save()
-    return Response({"message":"Success"})
+                return Response({"operation":True})
 
 @api_view(['GET','POST','PUT'])
 def dim_to(request):
@@ -374,7 +374,7 @@ def syncToSchedule(request):
                 id='retry_manual_mains',
                 name="Retrying mains operation in manual mode",
                 replace_existing=True,
-                run_date=datetime.now() + timedelta(seconds=15),
+                run_date=datetime.datetime.now() + timedelta(seconds=15),
                 timezone = 'Asia/Kolkata',
             )
         

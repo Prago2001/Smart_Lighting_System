@@ -161,57 +161,8 @@ const StreetNode = () => {
         </div>
       </div>
 
-      <div className="flex grid grid-flow-col grid-cols-6 gap-4 items-center justify-center mx-20 ">
-        <div className="flex grid items-center justify-center col-span-2 mx-20 ">
-          <Chart
-            width={"550px"}
-            height={"300px"}
-            chartType="LineChart"
-            loader={<div>Loading Chart</div>}
-            data={[
-              ["x", "light intensity"],
-              [0, 0],
-              [1, 10],
-              [2, 23],
-              [3, 17],
-              [4, 18],
-              [5, 9],
-              [6, 11],
-              [7, 27],
-              [8, 33],
-              [9, 40],
-              [10, 32],
-              [11, 35],
-            ]}
-            options={{
-              hAxis: {
-                title: "Time",
-                maxValue: 15,
-                minValue: 0,
-                viewWindow: {
-                  max: 10,
-                },
-              },
-              vAxis: {
-                title: "Light Intensity",
-              },
-              colors: ["#3366CC"],
-
-              legend: { position: "none" },
-              explorer: { axis: "horizontal" },
-              aggregationTarget: "auto",
-              animation: {
-                startup: true,
-                duration: 1000,
-                easing: "linear",
-              },
-            }}
-            rootProps={{ "data-testid": "1" }}
-          />
-          <div className="flex text-gray-500 font-bold items-center justify-center">
-            Light Intensity
-          </div>
-        </div>
+      <div className="flex grid grid-flow-col gap-4 items-center justify-center mx-20 mb-20">
+        
         <div className="flex grid items-center justify-center col-span-2 mx-20 ">      
             {/* <div className={classnames("flex text-gray-500 font-bold items-center justify-center display:none",{"display-error": currError})}> */}
             {currError && (<div className={classnames("flex text-gray-500 font-bold items-center justify-center display:none")}>
@@ -298,9 +249,9 @@ const StreetNode = () => {
           <Button
               className="col-start-8 col-span-2"
               variant="contained"
+              color="error" 
               // sx={buttonSx}
               //disabled={syncloading}
-              backgroundColor="red"
               onClick={() => {
                 setOpen(true);
                 // axios

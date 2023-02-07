@@ -22,6 +22,8 @@ import AlertTitle from '@mui/material/AlertTitle';
 import Fade from "@mui/material/Fade";
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
+import Stack from '@mui/material/Stack';
+
 
 
 
@@ -453,7 +455,7 @@ const Nodes = () => {
               variant="contained"
               sx={buttonSx}
               //disabled={syncloading}
-              backgroundColor="red"
+              color={scheduleStatus ? 'error' : 'primary'}
               onClick={() => {
                 if(scheduleStatus)
                 {
@@ -550,7 +552,7 @@ const Nodes = () => {
               }}
             >
               Sync with Auto
-              {loading && (
+              {syncloading && (
                 <CircularProgress
                   color="success"
                   size={24}
@@ -603,7 +605,7 @@ const Nodes = () => {
           </div>
         </TabPanel> 
         <TabPanel value={tab} index={1}>
-          <div className="flex grid grid-flow-col grid-cols-13 gap-4 items-center mx-10 p-4 bg-blue-200 bg-opacity-25 rounded-md">
+          <div className="flex grid grid-flow-col grid-cols-13 gap-4 items-center p-4 px-2 bg-blue-200 bg-opacity-25 rounded-md mb-7">
             <div className="flex items-center col-span-2 justify-start">
               <Checkbox
                 checked={global.isGlobal}
@@ -766,9 +768,9 @@ const Nodes = () => {
                   // setLoadingTelemetry(false);
                 }}
                 color={telemetryStatus ? "success" : "error"}
-                variant={telemetryStatus ? "contained" : "outlined"}
+                variant={telemetryStatus ? "outlined" : "contained"}
               >
-                Telemetry
+                Switch {telemetryStatus ? "OFF" : "ON"} Telemetry 
                 {loadingTelemetry && (
                   <CircularProgress
                     color="success"
@@ -785,13 +787,20 @@ const Nodes = () => {
               </Button>
             </div>
           </div>
-          <ul className="flex items-center justify-center grid grid-flow-row grid-cols-3 grid-rows-3 gap-4 p-6">
+          <Stack spacing={2}>
+            {
+              nodes.map((item) => (
+                <NodeItem item={item} />
+              ))
+            }
+          </Stack>
+          {/* <ul className="flex items-center justify-center grid grid-flow-col auto-cols-max gap-4 p-6">
             {nodes.map((item) => (
               <li key={item.id}>
                 <NodeItem item={item} />
               </li>
             ))}
-          </ul>
+          </ul> */}
         </TabPanel>
       </Box>
       {/* <Box sx={{ width: "30%" }}>
