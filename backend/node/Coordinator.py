@@ -21,6 +21,7 @@ def retry_mains(nodes,mains_val):
             node.is_active = False
         node.save()
         sleep(1)
+    MASTER.manualJobStatus = False
 
 def retry_dim(nodes,dim_val):
     for node_name,id in nodes.items():
@@ -35,7 +36,8 @@ def retry_dim(nodes,dim_val):
             print(f"Unable to dim {node.name}")
             node.is_active = False
         node.save()
-        sleep(1) 
+        sleep(1)
+    MASTER.manualJobStatus = False
 
 def perform_dimming(node_name,id,dim_value):
     print(f"Starting thread in {node_name}")
@@ -51,7 +53,7 @@ def perform_dimming(node_name,id,dim_value):
         if counter < 2:
             sleep(1)
         else:
-            sleep(3)
+            sleep(4)
         
     
     return (False,id)
@@ -69,7 +71,7 @@ def perform_toggle(node_name,id,mains_val):
         if counter < 2:
             sleep(1)
         else:
-            sleep(3)
+            sleep(4)
     
     return (False,id)
 
@@ -109,6 +111,7 @@ class Coordinator(metaclass=Singleton):
         self.SunSet = None
         self.Telemetry = True
         self.Schedule = True  # Variables are for telemetry,enable schedule button
+        self.manualJobStatus = False # If true then manual operation for some nodes has failed and job has been scheduled. After job is executed it will get toggled to False
 
     def discover_nodes(self) -> List[Remote]:
         self.nodes : List[Remote] = []

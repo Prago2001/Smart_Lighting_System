@@ -17,6 +17,17 @@ import AddCircleIcon from "@mui/icons-material/AddCircle";
 import HourglassBottomIcon from "@mui/icons-material/HourglassBottom";
 import "./nodes.css";
 import classnames from "classnames";
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
+import Fade from "@mui/material/Fade";
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import Stack from '@mui/material/Stack';
+
+
+
+
+
 
 const Nodes = () => {
   const {
@@ -45,16 +56,16 @@ const Nodes = () => {
   const [scheduleStatus, setScheduleStatus] = useState(true);
   // AlerDialog open or close?
   const [open, setOpen] = useState(false);
+  const [displaySuccessTab,setDisplaySuccessTab] = useState(false);
+  const [retryAlert,setRetryAlert] = useState(false);
+  const [retryNodes,setRetryNodes] = useState([]);
+  const [displayAlertTab,setDisplayAlertTab] = useState(false);
+  const [failedNodes,setFailedNodes] = useState([]);
 
   const handleChangeTab = (event, newValue) => {
     setTab(newValue);
     if(newValue == 1)
     {
-      axios.get(url + "getNodes/").then((res) => {
-        setNodes(res.data.nodes);
-        console.log(res.data.nodes);
-        console.log(nodes);
-      });
       axios
         .get(url + "toggle/", 
         // {
@@ -65,10 +76,9 @@ const Nodes = () => {
         // }
         )
         .then((res) => {
-          console.log(res.data.relay)
+          // console.log(res.data.relay)
           // setGlobalToggle(global.globalStatus);
           setGlobalToggle(res.data.relay);
-          console.log(nodes);
         });
       axios
         .get(url + "dimming/", 
@@ -80,8 +90,13 @@ const Nodes = () => {
         .then((res) => {
           // set current value
           setGlobalDim(res.data.intensity);
-          console.log(nodes);
+          // console.log(nodes);
         });
+      axios.get(url + "getNodes/").then((res) => {
+        setNodes(res.data.nodes);
+        console.log(res.data.nodes);
+        console.log(nodes);
+      });
     }
   };
 
@@ -119,6 +134,9 @@ const Nodes = () => {
       // current dimming value
       console.log(newValue);
       setPointerEvent(true);
+      setLoadingOnOff(true);
+      setDisplayAlertTab(false);
+      setDisplaySuccessTab(false);
       axios
         .put(url + "dimming/", {
           params: { 
@@ -127,18 +145,40 @@ const Nodes = () => {
         })
         .then((res) => {
           setGlobalDim(newValue);
-          console.log(nodes);
+          setLoadingOnOff(false);
           setPointerEvent(false);
+          
+          if(res.data.operation == false){
+            setRetryAlert(true);
+            setRetryNodes(res.data.nodes);
+            axios.get(url + "getRetryJobStatus/",{
+            }).then((res) => {
+              // console.log('Retry job done...')
+              setRetryAlert(false);
+              if(res.data.operation == false){
+                setFailedNodes(res.data.nodes);
+                setDisplayAlertTab(true);
+              }
+              else{
+                setDisplaySuccessTab(true);
+              }
+              axios.get(url + "getNodes/").then((res) => {
+                setNodes(res.data.nodes);
+              });
+              
+            })
+          }
+          else{
+            setDisplaySuccessTab(true);
+            axios.get(url + "getNodes/").then((res) => {
+              setNodes(res.data.nodes);
+            });
+          }
         });
+      
     }
   };
-  useEffect(() => {
-    axios.get(url + "getNodes/").then((res) => {
-      setNodes(res.data.nodes);
-      console.log(res.data.nodes);
-      console.log(nodes);
-    });
-  }, []);
+  
 
   useEffect(() => {
     axios
@@ -178,6 +218,13 @@ const Nodes = () => {
 
     }
   }, [global.isGlobal]);
+  useEffect(() => {
+    axios.get(url + "getNodes/").then((res) => {
+      setNodes(res.data.nodes);
+      console.log(res.data.nodes);
+      console.log(nodes);
+    });
+  }, []);
 
   useEffect(() => {
     axios.get(url + "activateSchedule/")
@@ -238,11 +285,108 @@ const Nodes = () => {
   return (
     // <div className="lg:container md:mx-auto mt-8 z-0">
     <div className={classnames("lg:container md:mx-auto mt-8 z-0", {"content-pointer-event-none": pointerEvent})}>
-      <div className="flex grid grid-flow-col grid-cols-6 gap-4 items-center m-8 mx-10 p-6 bg-gray-200 rounded-md  ">
-        <div className="flex col-span-4 items-center justify-start text-2xl text-primary font-bold ">
+      <Dialog
+        open={retryAlert}
+        sx = {{
+          justifyContent: "flex-start",
+          alignItems: "flex-start",
+          fontSize:16,
+          fontWeight: 'bold',
+        }}
+      >
+        <DialogTitle>
+          {"Operation failed for following nodes"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            <ul class='list-disc'>
+              {retryNodes.map(id => <li>{id}</li>)}
+            </ul>
+          </DialogContentText>
+          <br></br>
+          <DialogContentText>
+            <strong>Please Wait</strong>
+          </DialogContentText>
+          <DialogContentText>
+            Retrying automatically in few moments...
+          </DialogContentText>
+            <br></br>
+            <CircularProgress />
+        </DialogContent>
+      </Dialog>
+      <div className="flex grid grid-flow-row grid-rows-2 items-center m-2 mx-10">
+        <div className="flex col-span-4 items-center justify-start text-2xl text-primary font-bold bg-gray-200 p-3 rounded-md">
           Area Name
         </div>
+        <div className="flex col-span-4 justify-start text-2xl text-primary font-bold">
+          {
+            (() => {
+              if(displaySuccessTab == true){
+                return(
+                  <Fade
+                      sx={{ width: 1,fontSize:16, fontWeight: 'bold',}}
+                      in={displaySuccessTab}
+                      timeout={{ enter: 0, exit: 100 }} 
+                    >
+                      <Alert 
+                        severity="success"
+                        action={
+                          <IconButton
+                            aria-label="close"
+                            color="inherit"
+                            size="small"
+                            onClick={() => {
+                              setDisplaySuccessTab(false);
+                            }}
+                          >
+                            <CloseIcon />
+                          </IconButton>
+                        }
+                      >
+                        <AlertTitle>Success</AlertTitle>
+                        Operation was successful on all Street Lights!
+                      </Alert>
+                    </Fade>
+                )
+              }
+              else if(displayAlertTab == true){
+                return(
+                  <Fade
+                    sx={{ width: 1,fontSize:16, fontWeight: 'bold',}}
+                    in={displayAlertTab}
+                    timeout={{ enter: 0, exit: 0 }} 
+                  >
+                    <Alert 
+                      severity="error"
+                      action={
+                        <IconButton
+                            aria-label="close"
+                            color="inherit"
+                            size="small"
+                            onClick={() => {
+                              setDisplayAlertTab(false);
+                            }}
+                          >
+                            <CloseIcon />
+                          </IconButton>
+                      }
+                    >
+                        <AlertTitle>Error</AlertTitle>
+                        Operation failed for following lights:
+                        <ul class='list-disc'>
+                          {failedNodes.map(id => <li>{id}</li>)}
+                        </ul>
+                    </Alert>
+                  </Fade>
+                )
+              }
+            })()
+          }
+        </div>
       </div>
+      
+        
+
       <Box className="p-6 m-4">
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs
@@ -311,7 +455,7 @@ const Nodes = () => {
               variant="contained"
               sx={buttonSx}
               //disabled={syncloading}
-              backgroundColor="red"
+              color={scheduleStatus ? 'error' : 'primary'}
               onClick={() => {
                 if(scheduleStatus)
                 {
@@ -387,13 +531,28 @@ const Nodes = () => {
               disabled={syncloading || !scheduleStatus}
               onClick={() => {
                 setSyncloading(true);
+                setDisplayAlertTab(false);
+                setDisplaySuccessTab(false);
                 axios.get(url + "sync/").then((res) => {
-                  setSyncloading(false);
-                });
+                  
+                  axios.get(url + "getRetryJobStatus/",{
+
+                    }).then((res) => {
+                    // console.log('Retry job done...')
+                      if(res.data.operation == false){
+                        setFailedNodes(res.data.nodes);
+                        setDisplayAlertTab(true);
+                      }
+                      else{
+                        setDisplaySuccessTab(true);
+                      }
+                      setSyncloading(false);
+                    });
+                  });
               }}
             >
               Sync with Auto
-              {loading && (
+              {syncloading && (
                 <CircularProgress
                   color="success"
                   size={24}
@@ -446,7 +605,7 @@ const Nodes = () => {
           </div>
         </TabPanel> 
         <TabPanel value={tab} index={1}>
-          <div className="flex grid grid-flow-col grid-cols-13 gap-4 items-center mx-10 p-4 bg-blue-200 bg-opacity-25 rounded-md">
+          <div className="flex grid grid-flow-col grid-cols-13 gap-4 items-center p-4 px-2 bg-blue-200 bg-opacity-25 rounded-md mb-7">
             <div className="flex items-center col-span-2 justify-start">
               <Checkbox
                 checked={global.isGlobal}
@@ -517,6 +676,8 @@ const Nodes = () => {
                 onClick={() => {
                   setPointerEvent(true);
                   setLoadingOnOff(true);
+                  setDisplayAlertTab(false);
+                  setDisplaySuccessTab(false);
                   axios
                     .put(url + "toggle/", {
                       params: {
@@ -525,11 +686,43 @@ const Nodes = () => {
                       },
                     })
                     .then((res) => {
+                      
                       setGlobalToggle(!global.globalStatus);
-                      console.log(nodes);
+                      // console.log(nodes);
                       setPointerEvent(false);
                       setLoadingOnOff(false);
+                      
+                      console.log(res.data.nodes)
+                      if(res.data.operation == false){
+                        setRetryAlert(true);
+                        setRetryNodes(res.data.nodes);
+                        console.log(retryAlert);
+                        axios.get(url + "getRetryJobStatus/",{
+                        }).then((res) => {
+                          // console.log('Retry job done...')
+                          if(res.data.operation == false){
+                            setFailedNodes(res.data.nodes);
+                            setDisplayAlertTab(true);
+                          }
+                          else{
+                            setDisplaySuccessTab(true);
+                          }
+                          axios.get(url + "getNodes/").then((res) => {
+                            setNodes(res.data.nodes);
+                          });
+                          setRetryAlert(false);
+                        })
+                      }
+                      else{
+                        setDisplaySuccessTab(true);
+                        axios.get(url + "getNodes/").then((res) => {
+                          setNodes(res.data.nodes);
+                        });
+                      }
+                      
+                      
                     });
+                  
                 }}
                 color={global.globalStatus ? "success" : "error"}
                 variant={global.globalStatus ? "contained" : "outlined"}
@@ -575,9 +768,9 @@ const Nodes = () => {
                   // setLoadingTelemetry(false);
                 }}
                 color={telemetryStatus ? "success" : "error"}
-                variant={telemetryStatus ? "contained" : "outlined"}
+                variant={telemetryStatus ? "outlined" : "contained"}
               >
-                Telemetry
+                Switch {telemetryStatus ? "OFF" : "ON"} Telemetry 
                 {loadingTelemetry && (
                   <CircularProgress
                     color="success"
@@ -594,13 +787,20 @@ const Nodes = () => {
               </Button>
             </div>
           </div>
-          <ul className="flex items-center justify-center grid grid-flow-row grid-cols-3 grid-rows-3 gap-4 p-6">
+          <Stack spacing={2}>
+            {
+              nodes.map((item) => (
+                <NodeItem item={item} />
+              ))
+            }
+          </Stack>
+          {/* <ul className="flex items-center justify-center grid grid-flow-col auto-cols-max gap-4 p-6">
             {nodes.map((item) => (
               <li key={item.id}>
                 <NodeItem item={item} />
               </li>
             ))}
-          </ul>
+          </ul> */}
         </TabPanel>
       </Box>
       {/* <Box sx={{ width: "30%" }}>
