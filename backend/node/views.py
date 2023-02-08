@@ -277,28 +277,28 @@ def changeSchedule(request):
         db_slot.end = new_end
         db_slot.intensity = new_intensity
         db_slot.save()
-        scheduler.add_job(
-                    function_mapping['set_dim_to'],
-                    args=[db_slot.intensity],
-                    trigger='cron',
-                    id = db_slot.__str__(),
-                    hour = db_slot.start.hour,
-                    minute = db_slot.start.minute,
-                    timezone = 'Asia/Kolkata',
-                    replace_existing=True,
-                    name='dimming_job'
-                )
-        id = "sync_" + db_slot.__str__()
-        scheduler.add_job(
-                    sync_to_schedule,
-                    trigger='cron',
-                    id = id,
-                    hour = db_slot.start.hour,
-                    minute = db_slot.start.minute + 1,
-                    timezone = 'Asia/Kolkata',
-                    replace_existing=True,
-                    name='sync_auto'
-                )
+        # scheduler.add_job(
+        #             function_mapping['set_dim_to'],
+        #             args=[db_slot.intensity],
+        #             trigger='cron',
+        #             id = db_slot.__str__(),
+        #             hour = db_slot.start.hour,
+        #             minute = db_slot.start.minute,
+        #             timezone = 'Asia/Kolkata',
+        #             replace_existing=True,
+        #             name='dimming_job'
+        #         )
+        # id = "sync_" + db_slot.__str__()
+        # scheduler.add_job(
+        #             sync_to_schedule,
+        #             trigger='cron',
+        #             id = id,
+        #             hour = db_slot.start.hour,
+        #             minute = db_slot.start.minute + 1,
+        #             timezone = 'Asia/Kolkata',
+        #             replace_existing=True,
+        #             name='sync_auto'
+        #         )
         row += 1
     for job in scheduler.get_jobs():
         print("name: %s, trigger: %s, next run: %s, handler: %s" % (job.name, job.trigger, job.next_run_time, job.func))

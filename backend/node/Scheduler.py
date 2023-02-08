@@ -61,45 +61,45 @@ def fetchSunModel() :
             slot.save()
         count += 1
 
-    j = scheduler.get_job('sunset')
-    if j is None:
-        scheduler.add_job(function_mapping['make_all_on'], 'cron', id='sunset', hour=s["sunset"].hour, minute=s["sunset"].minute, timezone='Asia/Kolkata')
-    else:
-        j.reschedule('cron', hour=s["sunset"].hour, minute=s["sunset"].minute, timezone='Asia/Kolkata')
-    j = scheduler.get_job('sunrise')
-    if j is None:
-        scheduler.add_job(function_mapping['make_all_off'], 'cron', id='sunrise',  hour=s["sunrise"].hour, minute=s["sunrise"].minute, timezone='Asia/Kolkata')
-    else:
-        j.reschedule('cron', hour=s["sunrise"].hour, minute=s["sunrise"].minute, timezone='Asia/Kolkata')
+    # j = scheduler.get_job('sunset')
+    # if j is None:
+    #     scheduler.add_job(function_mapping['make_all_on'], 'cron', id='sunset', hour=s["sunset"].hour, minute=s["sunset"].minute, timezone='Asia/Kolkata')
+    # else:
+    #     j.reschedule('cron', hour=s["sunset"].hour, minute=s["sunset"].minute, timezone='Asia/Kolkata')
+    # j = scheduler.get_job('sunrise')
+    # if j is None:
+    #     scheduler.add_job(function_mapping['make_all_off'], 'cron', id='sunrise',  hour=s["sunrise"].hour, minute=s["sunrise"].minute, timezone='Asia/Kolkata')
+    # else:
+    #     j.reschedule('cron', hour=s["sunrise"].hour, minute=s["sunrise"].minute, timezone='Asia/Kolkata')
     
 
-    # separate backup (sync with auto job) at sunrise
-    scheduler.add_job(
-                    sync_to_schedule,
-                    trigger='cron',
-                    id = "sync_sunset",
-                    hour = s['sunrise'].hour,
-                    minute = s['sunrise'].minute + 1,
-                    timezone = 'Asia/Kolkata',
-                    replace_existing=True,
-                    name='sync_auto'
-                )
+    # # separate backup (sync with auto job) at sunrise
+    # scheduler.add_job(
+    #                 sync_to_schedule,
+    #                 trigger='cron',
+    #                 id = "sync_sunset",
+    #                 hour = s['sunrise'].hour,
+    #                 minute = s['sunrise'].minute + 1,
+    #                 timezone = 'Asia/Kolkata',
+    #                 replace_existing=True,
+    #                 name='sync_auto'
+    #             )
 
 
 
 
 def updater_start():
 
-    scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values')
+    # scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values')
     scheduler.add_job(fetchSunModel, 'cron', id='sunmodel', hour=0, minute=15, timezone='Asia/Kolkata',name='sunrise_sunset_values')
-    scheduler.add_job(
-        sync_to_schedule,
-        trigger='interval',
-        minutes=30,
-        id='sync_to_auto',
-        name='sync_every_half_hour',
-        timezone='Asia/Kolkata'
-    )
+    # scheduler.add_job(
+    #     sync_to_schedule,
+    #     trigger='interval',
+    #     minutes=30,
+    #     id='sync_to_auto',
+    #     name='sync_every_half_hour',
+    #     timezone='Asia/Kolkata'
+    # )
     scheduler.start()
 
 
