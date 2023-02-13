@@ -605,7 +605,7 @@ const Nodes = () => {
           </div>
         </TabPanel> 
         <TabPanel value={tab} index={1}>
-          <div className="flex grid grid-flow-col grid-cols-13 gap-4 items-center p-4 px-2 bg-blue-200 bg-opacity-25 rounded-md mb-7">
+          <div className="flex grid grid-flow-col grid-cols-12 gap-5 items-center p-4 px-2 bg-blue-200 bg-opacity-25 rounded-md mb-7">
             <div className="flex items-center col-span-2 justify-start">
               <Checkbox
                 checked={global.isGlobal}
@@ -621,8 +621,9 @@ const Nodes = () => {
               </span>
             </div>
 
-            <div className="flex col-span-1 items-center justify-end">
+            <div className="flex col-span-2 items-center justify-center">
               <Button
+                size="large"
                 variant="contained"
                 sx={buttonSx}
                 disabled={loading}
@@ -644,7 +645,7 @@ const Nodes = () => {
                 )}
               </Button>
             </div>
-            <div className="flex col-start-6 col-span-4 items-center">
+            <div className="flex col-span-4 items-center justify-center">
               <span>
                 <Typography className="text-gray-500">
                   Light Intensity &nbsp; &nbsp;
@@ -670,8 +671,9 @@ const Nodes = () => {
               ></Slider>
             </div>
 
-            <div className="flex col-start-10 col-span-2 items-centers justify-end ">
+            <div className="flex  col-span-2 items-centers justify-end ">
               <Button
+                size='large'
                 disabled={!global.isGlobal || loadingOnOff}
                 onClick={() => {
                   setPointerEvent(true);
@@ -727,7 +729,7 @@ const Nodes = () => {
                 color={global.globalStatus ? "success" : "error"}
                 variant={global.globalStatus ? "contained" : "outlined"}
               >
-                All On/Off
+                Switch All {global.globalStatus ? "Off" : "On"}
                 {loadingOnOff && (
                   <CircularProgress
                     color="success"
@@ -744,8 +746,9 @@ const Nodes = () => {
               </Button>
             </div>
 
-            <div className="flex col-start-13 col-span-2 items-centers ">
+            <div className="flex  col-span-2 items-centers justify-end">
               <Button
+                size='small'
                 disabled={loadingTelemetry}
                 onClick={() => {
                   setPointerEvent(true);

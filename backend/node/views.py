@@ -56,11 +56,18 @@ def discover_remote_nodes(request):
             node.is_active = False
             node.save()
         else:
-            temp_val = remote.get_temperature_value()
-            curr_val = remote.get_current_value()
+            temp_val = None
+            curr_val = None
+            try:
+                temp_val = remote.get_temperature_value()
+                curr_val = remote.get_current_value()
+            except Exception as e:
+                print(f"Real time collection of values failed for {node.name}")
             node.is_active = True
-            node.current = curr_val
-            node.temperature = temp_val
+            if curr_val is not None:
+                node.current = curr_val
+            if temp_val is not None:
+                node.temperature = temp_val
             node.save()
 
             CurrentMeasurement.objects.create(SlaveId = node,currentValue = curr_val)
@@ -152,13 +159,17 @@ def toggle_mains(request):
             node = Slave.objects.get(name=id)
             if remote is None:
                 node.is_active = False
-                node.mains_val = switch_mains_value
                 node.save()
                 return Response({"operation":False})
             else:
-                node.is_active = True
-                remote.set_mains_value(switch_mains_value)
+                try:
+                    remote.set_mains_value(switch_mains_value)
+                except Exception as e:
+                    node.is_active = False
+                    node.save()
+                    return Response({"operation":False})
                 node.mains_val = switch_mains_value
+                node.is_active = True
                 node.save()
                 return Response({"operation":True})
 
@@ -221,13 +232,17 @@ def dim_to(request):
             node = Slave.objects.get(name=id)
             if remote is None:
                 node.is_active = False
-                node.dim_val = dim_to_value
                 node.save()
                 return Response({"message":f"Node {node.name} is inactive"})
             else:
-                node.is_active = True
-                remote.set_dim_value(dim_to_value)
+                try:
+                    remote.set_dim_value(dim_to_value)
+                except Exception as e:
+                    node.is_active = False
+                    node.save()
+                    return Response({"message":f"Node {node.name} is inactive"})
                 node.dim_val = dim_to_value
+                node.is_active = True
                 node.save()
 
     return Response({"message":"Success"})
@@ -509,4 +524,4 @@ def getRetryJobStatus(response):
     if len(failedNodes) == 0:
         return Response({'operation':True})
     else:
-        return Response({'operation':False,'nodes':failedNodes})
+        return Response({'operation':False,'nodes':failedNodes})    

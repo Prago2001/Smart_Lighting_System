@@ -14,12 +14,11 @@ import classnames from "classnames";
 
 const NodeItem = ({ item, ticked }) => {
   const { global,setIO } = useNodeContext();
-  const [isActive,setIsActive] = useState (item.is_active);
 
   return (
     <div className={classnames("flex flex-wrap items-center justify-center hover:shadow-md hover:scale-100 rounded-md py-4",
-    {'bg-blue-100' : isActive === true},
-    {'bg-red-100' : isActive === false}
+    {'bg-blue-100' : item.is_active === true},
+    {'bg-red-100' : item.is_active === false}
     )}>
       <Grid
         container
@@ -46,10 +45,14 @@ const NodeItem = ({ item, ticked }) => {
                   })
                   .then((res) => {
                     if(res.data.operation === true){
+                      // setIsActive(true);
+                      setIO(item.id,"is_active",true);
                       setIO(item.id, "relay", !item.relay);
+                      // console.log(isActive);
+                      // console.log(item)
                     }
                     else{
-                      setIsActive(false);
+                      setIO(item.id,"is_active",false)
                     }
                     
                     console.log(item);
