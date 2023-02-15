@@ -2,15 +2,20 @@ import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from astral import LocationInfo
 from astral.sun import sun
-from .models import Schedule, Slot, CurrentMeasurement, TemperatureMeasurement,Slave
-
-from .Coordinator import get_curr_temp_val_async
+from .models import Schedule, Slot, CurrentMeasurement, TemperatureMeasurement,Slave,Notification
+from datetime import timedelta
+from .Coordinator import get_curr_temp_val_async,retry_dim,retry_mains
 import concurrent.futures
 
 try:
     from .Coordinator import MASTER
 except Exception as e:
     pass
+
+TOGGLE_SUCCESS = "Lights switched {} successfully.\n"
+TOGGLE_FAILURE = "Switching {} lights failed for the following nodes:\n"
+DIM_SUCCESS = 'Lights dimmed to {}% successfully.\n'
+DIM_FAILURE = 'Dimming lights to {}% failed for the following nodes:\n'
 
 function_mapping = {
     'set_dim_to' : MASTER.set_dim_value,
@@ -61,29 +66,28 @@ def fetchSunModel() :
             slot.save()
         count += 1
 
-    j = scheduler.get_job('sunset')
-    if j is None:
-        scheduler.add_job(function_mapping['make_all_on'], 'cron', id='sunset', hour=s["sunset"].hour, minute=s["sunset"].minute, timezone='Asia/Kolkata')
-    else:
-        j.reschedule('cron', hour=s["sunset"].hour, minute=s["sunset"].minute, timezone='Asia/Kolkata')
-    j = scheduler.get_job('sunrise')
-    if j is None:
-        scheduler.add_job(function_mapping['make_all_off'], 'cron', id='sunrise',  hour=s["sunrise"].hour, minute=s["sunrise"].minute, timezone='Asia/Kolkata')
-    else:
-        j.reschedule('cron', hour=s["sunrise"].hour, minute=s["sunrise"].minute, timezone='Asia/Kolkata')
-    
-
-    # separate backup (sync with auto job) at sunrise
+    # Changing scheduled job at sunrise
     scheduler.add_job(
-                    sync_to_schedule,
-                    trigger='cron',
-                    id = "sync_sunset",
-                    hour = s['sunrise'].hour,
-                    minute = s['sunrise'].minute + 1,
-                    timezone = 'Asia/Kolkata',
-                    replace_existing=True,
-                    name='sync_auto'
-                )
+                        sync_to_schedule,
+                        trigger='cron',
+                        id = "sync_sunrise",
+                        hour = s["sunrise"].hour,
+                        minute = s["sunrise"].minute,
+                        timezone = 'Asia/Kolkata',
+                        replace_existing=True,
+                        name='sync_to_schedule'
+    )
+    # Changing scheduled job at sunset
+    scheduler.add_job(
+                        sync_to_schedule,
+                        trigger='cron',
+                        id = "sync_sunset",
+                        hour = s["sunset"].hour,
+                        minute = s["sunset"].minute,
+                        timezone = 'Asia/Kolkata',
+                        replace_existing=True,
+                        name='sync_to_schedule'
+    )
 
 
 
@@ -100,7 +104,10 @@ def updater_start():
         name='sync_every_half_hour',
         timezone='Asia/Kolkata'
     )
+    add_sync_jobs()
     scheduler.start()
+    for job in scheduler.get_jobs():
+        print("name: %s, id: %s, trigger: %s, next run: %s, handler: %s" % (job.name,job.id, job.trigger, job.next_run_time, job.func))
 
 
 
@@ -132,37 +139,179 @@ def sync_to_schedule():
     sunrise = MASTER.SunRise
 
     if current_time >= sunset or current_time < sunrise:
-        MASTER.make_all_on()
+        
         current_schedule = Schedule.objects.get(currently_active = True)
         slots = Slot.objects.filter(schedule=current_schedule).order_by('id')
 
         for slot in slots:
             start = slot.start.strftime("%H:%M")
             end = slot.end.strftime("%H:%M")
+            print(start,sunset,start == sunset)
+            if start == sunset:
+                
+                failed_nodes = MASTER.make_all_on()
+                
+                if len(failed_nodes) > 0 :
+                    MASTER.scheduledJobStatus = True
+                    scheduler.add_job(
+                        func=retry_mains,
+                        trigger='date',
+                        args=[failed_nodes,True,],
+                        id='retry_auto_mains',
+                        name="Retrying mains operation in auto mode",
+                        replace_existing=True,
+                        run_date=datetime.datetime.now() + timedelta(seconds=15),
+                        timezone = 'Asia/Kolkata',
+                    )
+                while MASTER.scheduledJobStatus is True:
+                    continue
+                if len(MASTER.failed_nodes) > 0:
+                    msg = ",    ".join(MASTER.failed_nodes)
+                    Notification.objects.create(
+                        operation_type='toggle',
+                        success = False,
+                        message = TOGGLE_FAILURE.format("ON") + msg
+                    )
+                else:
+                    Notification.objects.create(
+                        operation_type='toggle',
+                        success = True,
+                        message = TOGGLE_SUCCESS.format("ON")
+                    )
+            MASTER.failed_nodes = []
             if start < end:
                 if start <= current_time < end:
-                    MASTER.set_dim_value(slot.intensity)
+                    failed_nodes = MASTER.set_dim_value(slot.intensity)
+                    if len(failed_nodes) > 0 :
+                        MASTER.scheduledJobStatus = True
+                        scheduler.add_job(
+                            func=retry_dim,
+                            trigger='date',
+                            args=[failed_nodes,slot.intensity,],
+                            id='retry_auto_dim',
+                            name="Retrying dim operation in auto mode",
+                            replace_existing=True,
+                            run_date=datetime.datetime.now() + timedelta(seconds=15),
+                            timezone = 'Asia/Kolkata',
+                        )
+                    while MASTER.scheduledJobStatus is True:
+                        continue
+                    if len(MASTER.failed_nodes) > 0:
+                        msg = ", ".join(MASTER.failed_nodes)
+                        Notification.objects.create(
+                            operation_type='dim',
+                            success = False,
+                            message = DIM_FAILURE.format(slot.intensity) + msg
+                        )
+                    else:
+                        Notification.objects.create(
+                            operation_type='dim',
+                            success = True,
+                            message = DIM_SUCCESS.format(slot.intensity)
+                        )
+                    break
             else:
                 if current_time >= start or current_time < end:
-                    MASTER.set_dim_value(slot.intensity)
+                    failed_nodes = MASTER.set_dim_value(slot.intensity)
+                    if len(failed_nodes) > 0 :
+                        MASTER.scheduledJobStatus = True
+                        scheduler.add_job(
+                            func=retry_dim,
+                            trigger='date',
+                            args=[failed_nodes,slot.intensity,],
+                            id='retry_auto_dim',
+                            name="Retrying dim operation in auto mode",
+                            replace_existing=True,
+                            run_date=datetime.datetime.now() + timedelta(seconds=15),
+                            timezone = 'Asia/Kolkata',
+                        )
+                    while MASTER.scheduledJobStatus is True:
+                        continue
+                    if len(MASTER.failed_nodes) > 0:
+                        msg = ", ".join(MASTER.failed_nodes)
+                        Notification.objects.create(
+                            operation_type='dim',
+                            success = False,
+                            message = DIM_FAILURE.format(slot.intensity) + msg
+                        )
+                    else:
+                        Notification.objects.create(
+                            operation_type='dim',
+                            success = True,
+                            message = DIM_SUCCESS.format(slot.intensity)
+                        )
+                    break
+        MASTER.failed_nodes = []
     else:
-        MASTER.make_all_off()
+        failed_nodes = MASTER.make_all_off()
+        if len(failed_nodes) > 0:
+            MASTER.scheduledJobStatus = True
+            scheduler.add_job(
+                func=retry_mains,
+                trigger='date',
+                args=[failed_nodes,False,],
+                id='retry_auto_mains',
+                name="Retrying mains operation in auto mode",
+                replace_existing=True,
+                run_date=datetime.datetime.now() + timedelta(seconds=15),
+                timezone = 'Asia/Kolkata',
+            )
+        while MASTER.scheduledJobStatus is True:
+            continue
+        if len(MASTER.failed_nodes) > 0:
+            msg = ", ".join(MASTER.failed_nodes)
+            Notification.objects.create(
+                operation_type='toggle',
+                success = False,
+                message = TOGGLE_FAILURE.format("OFF") + msg
+            )
+        else:
+            Notification.objects.create(
+                operation_type='toggle',
+                success = True,
+                message = TOGGLE_SUCCESS.format("OFF")
+            )
+        MASTER.failed_nodes = []
 
 
 def add_sync_jobs():
     current_active_schedule = Schedule.objects.get(currently_active=True)
     slots = Slot.objects.filter(schedule=current_active_schedule).order_by('id')
     for slot in slots:
-        id = "sync_" + slot.__str__()
-        scheduler.add_job(
-                    sync_to_schedule,
-                    trigger='cron',
-                    id = id,
-                    hour = slot.start.hour,
-                    minute = slot.start.minute + 1,
-                    timezone = 'Asia/Kolkata',
-                    replace_existing=True,
-                    name='sync_auto'
-                )
-    for job in scheduler.get_jobs():
-        print("name: %s, trigger: %s, next run: %s, handler: %s" % (job.name, job.trigger, job.next_run_time, job.func))
+        
+        if slot.start.strftime("%H:%M") == MASTER.SunSet:
+            scheduler.add_job(
+                        sync_to_schedule,
+                        trigger='cron',
+                        id = "sync_sunset",
+                        hour = slot.start.hour,
+                        minute = slot.start.minute,
+                        timezone = 'Asia/Kolkata',
+                        replace_existing=True,
+                        name='sync_to_schedule'
+            )
+        else:
+            id = "sync_" + slot.__str__()            
+            scheduler.add_job(
+                        sync_to_schedule,
+                        trigger='cron',
+                        id = id,
+                        hour = slot.start.hour,
+                        minute = slot.start.minute,
+                        timezone = 'Asia/Kolkata',
+                        replace_existing=True,
+                        name='sync_to_schedule'
+                    )
+        
+        if slot.end.strftime("%H:%M") == MASTER.SunRise:
+            scheduler.add_job(
+                        sync_to_schedule,
+                        trigger='cron',
+                        id = "sync_sunrise",
+                        hour = slot.end.hour,
+                        minute = slot.end.minute,
+                        timezone = 'Asia/Kolkata',
+                        replace_existing=True,
+                        name='sync_to_schedule'
+                    )
+    

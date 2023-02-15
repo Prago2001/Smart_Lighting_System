@@ -8,6 +8,7 @@ from .Remote import Remote
 
 
 def retry_mains(nodes,mains_val):
+    MASTER.failed_nodes = []
     for node_name,id in nodes.items():
         remote = MASTER.get_node(node_name)
         node = Slave.objects.get(unique_id=id)
@@ -18,6 +19,7 @@ def retry_mains(nodes,mains_val):
                 node.is_active = False
                 node.save()
                 print(f"Unable to toggle {node.name}")
+                MASTER.failed_nodes.append(id)
                 continue
             node.mains_val = mains_val
             node.is_active = True
@@ -25,11 +27,14 @@ def retry_mains(nodes,mains_val):
         else:
             print(f"Unable to toggle {node.name}")
             node.is_active = False
+            MASTER.failed_nodes.append(id)
         node.save()
         sleep(2)
     MASTER.manualJobStatus = False
+    MASTER.scheduledJobStatus = False
 
 def retry_dim(nodes,dim_val):
+    MASTER.failed_nodes = []
     for node_name,id in nodes.items():
         remote = MASTER.get_node(node_name)
         node = Slave.objects.get(unique_id=id)
@@ -40,6 +45,7 @@ def retry_dim(nodes,dim_val):
                 node.is_active = False
                 node.save()
                 print(f"Unable to dim {node.name}")
+                MASTER.failed_nodes.append(id)
                 continue
             node.dim_val = dim_val
             node.is_active = True
@@ -47,9 +53,11 @@ def retry_dim(nodes,dim_val):
         else:
             print(f"Unable to dim {node.name}")
             node.is_active = False
+            MASTER.failed_nodes.append(id)
         node.save()
         sleep(2)
     MASTER.manualJobStatus = False
+    MASTER.scheduledJobStatus = False
 
 def perform_dimming(node_name,id,dim_value):
     print(f"Starting thread in {node_name}")
@@ -132,6 +140,8 @@ class Coordinator(metaclass=Singleton):
         self.Telemetry = True
         self.Schedule = True  # Variables are for telemetry,enable schedule button
         self.manualJobStatus = False # If true then manual operation for some nodes has failed and job has been scheduled. After job is executed it will get toggled to False
+        self.scheduledJobStatus = False
+        self.failed_nodes = []
 
     def discover_nodes(self) -> List[Remote]:
         self.nodes : List[Remote] = []

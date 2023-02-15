@@ -67,3 +67,21 @@ geek_object = GeeksModel.objects.create(geeks_field = d)
 geek_object.save()
 
 '''
+class Notification(models.Model):
+    OperationTypeChoices = [
+        ('toggle','Toggle mains switch'),
+        ('dim','Perform dimming'),
+        ('current',"Alert on current value"),
+        ('temperature',"Alert on temperature value"),
+    ]
+    operation_type = models.CharField(
+        max_length=16,
+        choices=OperationTypeChoices
+    )
+    timestamp = models.DateTimeField(auto_now_add=True,editable=True)
+    success = models.BooleanField()
+    is_read = models.BooleanField(default=False)
+    message = models.TextField()
+
+    def __str__(self):
+        return self.operation_type
