@@ -4,7 +4,7 @@ services:
   backend:
     build: ./backend
     # command: >
-    #   sh -c "python /app/backend/manage.py makemigrattions --settings=backend.settings.dev && python /app/backend/manage.py migrate --settings=backend.settings.dev"
+    #   sh -c "python /app/backend/manage.py makemigrations --settings=backend.settings.dev && python /app/backend/manage.py migrate --settings=backend.settings.dev"
     command: >
       sh -c "python /app/backend/manage.py runserver 0.0.0.0:8000 --noreload --settings=backend.settings.dev"
     volumes:

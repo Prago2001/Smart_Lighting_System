@@ -61,6 +61,7 @@ const Nodes = () => {
   const [retryNodes,setRetryNodes] = useState([]);
   const [displayAlertTab,setDisplayAlertTab] = useState(false);
   const [failedNodes,setFailedNodes] = useState([]);
+  const [logs,setLogs] = useState([]);
 
   const handleChangeTab = (event, newValue) => {
     setTab(newValue);
@@ -97,6 +98,12 @@ const Nodes = () => {
         console.log(res.data.nodes);
         console.log(nodes);
       });
+    }
+    else if(newValue == 2){
+      axios.get(url + "logs/").then((res) => {
+        setLogs(res.data.logs);
+        console.log(res.data.logs);
+      })
     }
   };
 
@@ -396,6 +403,7 @@ const Nodes = () => {
           >
             <Tab label="AUTO" {...a11yProps(0)} />
             <Tab label="MANUAL" {...a11yProps(1)} />
+            <Tab label="LOGS" {...a11yProps(2)}/>
           </Tabs>
         </Box>
         <TabPanel value={tab} index={0}>
@@ -804,6 +812,9 @@ const Nodes = () => {
               </li>
             ))}
           </ul> */}
+        </TabPanel>
+        <TabPanel value={tab} index={2}>
+
         </TabPanel>
       </Box>
       {/* <Box sx={{ width: "30%" }}>

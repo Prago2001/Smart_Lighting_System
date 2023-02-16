@@ -78,7 +78,7 @@ class Notification(models.Model):
         max_length=16,
         choices=OperationTypeChoices
     )
-    timestamp = models.DateTimeField(auto_now_add=True,editable=True)
+    timestamp = models.DateTimeField()
     success = models.BooleanField()
     is_read = models.BooleanField(default=False)
     message = models.TextField()

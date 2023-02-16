@@ -6,11 +6,12 @@ import pytz
 from dateutil import parser
 from datetime import timedelta
 import datetime
-from .models import CurrentMeasurement, Schedule, Slave, Slot, TemperatureMeasurement
+from .models import CurrentMeasurement, Schedule, Slave, Slot, TemperatureMeasurement,Notification
 import time
 import concurrent.futures
 from .Coordinator import perform_dimming,perform_toggle,retry_mains, retry_dim
 from apscheduler.job import Job
+from django.utils.timezone import get_current_timezone
 
 try:
     from .Coordinator import MASTER
@@ -548,4 +549,16 @@ def getRetryJobStatus(response):
     if len(failedNodes) == 0:
         return Response({'operation':True})
     else:
-        return Response({'operation':False,'nodes':failedNodes})    
+        return Response({'operation':False,'nodes':failedNodes})
+
+@api_view(['GET'])
+def logs(request):
+    data = []
+    for record in Notification.objects.all().order_by('timestamp'):
+        data.append({
+            'operation_type': record.operation_type,
+            'success': record.success,
+            'message': record.message,
+            'timestamp': record.timestamp.astimezone(tz=get_current_timezone())
+        })
+    return Response({'logs':data})

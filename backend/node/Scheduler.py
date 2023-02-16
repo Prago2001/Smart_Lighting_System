@@ -6,16 +6,16 @@ from .models import Schedule, Slot, CurrentMeasurement, TemperatureMeasurement,S
 from datetime import timedelta
 from .Coordinator import get_curr_temp_val_async,retry_dim,retry_mains
 import concurrent.futures
-
+from django.utils.timezone import get_current_timezone
 try:
     from .Coordinator import MASTER
 except Exception as e:
     pass
 
-TOGGLE_SUCCESS = "Lights switched {} successfully.\n"
-TOGGLE_FAILURE = "Switching {} lights failed for the following nodes:\n"
-DIM_SUCCESS = 'Lights dimmed to {}% successfully.\n'
-DIM_FAILURE = 'Dimming lights to {}% failed for the following nodes:\n'
+TOGGLE_SUCCESS = "Lights switched {} successfully."
+TOGGLE_FAILURE = "Switching {} lights failed for the following nodes:"
+DIM_SUCCESS = 'Lights dimmed to {}% successfully.'
+DIM_FAILURE = 'Dimming lights to {}% failed for the following nodes:'
 
 function_mapping = {
     'set_dim_to' : MASTER.set_dim_value,
@@ -143,42 +143,42 @@ def sync_to_schedule():
         current_schedule = Schedule.objects.get(currently_active = True)
         slots = Slot.objects.filter(schedule=current_schedule).order_by('id')
 
+        failed_nodes = MASTER.make_all_on()      
+        if len(failed_nodes) > 0 :
+            MASTER.scheduledJobStatus = True
+            scheduler.add_job(
+                func=retry_mains,
+                trigger='date',
+                args=[failed_nodes,True,],
+                id='retry_auto_mains',
+                name="Retrying mains operation in auto mode",
+                replace_existing=True,
+                run_date=datetime.datetime.now() + timedelta(seconds=15),
+                timezone = 'Asia/Kolkata',
+            )
+        while MASTER.scheduledJobStatus is True:
+            continue
+        if len(MASTER.failed_nodes) > 0:
+            msg = ", ".join(MASTER.failed_nodes)
+            Notification.objects.create(
+                operation_type='toggle',
+                success = False,
+                message = TOGGLE_FAILURE.format("ON") + msg,
+                timestamp=datetime.datetime.now(tz=get_current_timezone())
+            )
+        else:
+            Notification.objects.create(
+                operation_type='toggle',
+                success = True,
+                message = TOGGLE_SUCCESS.format("ON"),
+                timestamp=datetime.datetime.now(tz=get_current_timezone())
+            )
+        MASTER.failed_nodes = []
+
         for slot in slots:
             start = slot.start.strftime("%H:%M")
             end = slot.end.strftime("%H:%M")
-            print(start,sunset,start == sunset)
-            if start == sunset:
-                
-                failed_nodes = MASTER.make_all_on()
-                
-                if len(failed_nodes) > 0 :
-                    MASTER.scheduledJobStatus = True
-                    scheduler.add_job(
-                        func=retry_mains,
-                        trigger='date',
-                        args=[failed_nodes,True,],
-                        id='retry_auto_mains',
-                        name="Retrying mains operation in auto mode",
-                        replace_existing=True,
-                        run_date=datetime.datetime.now() + timedelta(seconds=15),
-                        timezone = 'Asia/Kolkata',
-                    )
-                while MASTER.scheduledJobStatus is True:
-                    continue
-                if len(MASTER.failed_nodes) > 0:
-                    msg = ",    ".join(MASTER.failed_nodes)
-                    Notification.objects.create(
-                        operation_type='toggle',
-                        success = False,
-                        message = TOGGLE_FAILURE.format("ON") + msg
-                    )
-                else:
-                    Notification.objects.create(
-                        operation_type='toggle',
-                        success = True,
-                        message = TOGGLE_SUCCESS.format("ON")
-                    )
-            MASTER.failed_nodes = []
+
             if start < end:
                 if start <= current_time < end:
                     failed_nodes = MASTER.set_dim_value(slot.intensity)
@@ -201,13 +201,15 @@ def sync_to_schedule():
                         Notification.objects.create(
                             operation_type='dim',
                             success = False,
-                            message = DIM_FAILURE.format(slot.intensity) + msg
+                            message = DIM_FAILURE.format(slot.intensity) + msg,
+                            timestamp=datetime.datetime.now(tz=get_current_timezone())
                         )
                     else:
                         Notification.objects.create(
                             operation_type='dim',
                             success = True,
-                            message = DIM_SUCCESS.format(slot.intensity)
+                            message = DIM_SUCCESS.format(slot.intensity),
+                            timestamp=datetime.datetime.now(tz=get_current_timezone())
                         )
                     break
             else:
@@ -232,13 +234,15 @@ def sync_to_schedule():
                         Notification.objects.create(
                             operation_type='dim',
                             success = False,
-                            message = DIM_FAILURE.format(slot.intensity) + msg
+                            message = DIM_FAILURE.format(slot.intensity) + msg,
+                            timestamp=datetime.datetime.now(tz=get_current_timezone())
                         )
                     else:
                         Notification.objects.create(
                             operation_type='dim',
                             success = True,
-                            message = DIM_SUCCESS.format(slot.intensity)
+                            message = DIM_SUCCESS.format(slot.intensity),
+                            timestamp=datetime.datetime.now(tz=get_current_timezone())
                         )
                     break
         MASTER.failed_nodes = []
@@ -263,13 +267,15 @@ def sync_to_schedule():
             Notification.objects.create(
                 operation_type='toggle',
                 success = False,
-                message = TOGGLE_FAILURE.format("OFF") + msg
+                message = TOGGLE_FAILURE.format("OFF") + msg,
+                timestamp=datetime.datetime.now(tz=get_current_timezone())
             )
         else:
             Notification.objects.create(
                 operation_type='toggle',
                 success = True,
-                message = TOGGLE_SUCCESS.format("OFF")
+                message = TOGGLE_SUCCESS.format("OFF"),
+                timestamp=datetime.datetime.now(tz=get_current_timezone())
             )
         MASTER.failed_nodes = []
 

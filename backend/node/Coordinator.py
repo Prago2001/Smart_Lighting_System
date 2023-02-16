@@ -19,7 +19,7 @@ def retry_mains(nodes,mains_val):
                 node.is_active = False
                 node.save()
                 print(f"Unable to toggle {node.name}")
-                MASTER.failed_nodes.append(id)
+                MASTER.failed_nodes.append(node.name)
                 continue
             node.mains_val = mains_val
             node.is_active = True
@@ -27,7 +27,7 @@ def retry_mains(nodes,mains_val):
         else:
             print(f"Unable to toggle {node.name}")
             node.is_active = False
-            MASTER.failed_nodes.append(id)
+            MASTER.failed_nodes.append(node.name)
         node.save()
         sleep(2)
     MASTER.manualJobStatus = False
@@ -45,7 +45,7 @@ def retry_dim(nodes,dim_val):
                 node.is_active = False
                 node.save()
                 print(f"Unable to dim {node.name}")
-                MASTER.failed_nodes.append(id)
+                MASTER.failed_nodes.append(node.name)
                 continue
             node.dim_val = dim_val
             node.is_active = True
@@ -53,7 +53,7 @@ def retry_dim(nodes,dim_val):
         else:
             print(f"Unable to dim {node.name}")
             node.is_active = False
-            MASTER.failed_nodes.append(id)
+            MASTER.failed_nodes.append(node.name)
         node.save()
         sleep(2)
     MASTER.manualJobStatus = False
