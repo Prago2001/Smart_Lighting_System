@@ -75,8 +75,9 @@ class NodeConfig(AppConfig):
                 current_schedule = default_schedule
 
             fetchSunModel()
-            sync_to_schedule()
             updater_start()
+            sync_to_schedule()
+            
             # add_dim_jobs_on_startup()
             # add_sync_jobs()
             

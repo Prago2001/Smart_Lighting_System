@@ -554,7 +554,7 @@ def getRetryJobStatus(response):
 @api_view(['GET'])
 def logs(request):
     data = []
-    for record in Notification.objects.all().order_by('timestamp'):
+    for record in Notification.objects.all().order_by('-timestamp'):
         data.append({
             'operation_type': record.operation_type,
             'success': record.success,

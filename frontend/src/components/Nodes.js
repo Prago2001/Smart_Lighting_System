@@ -23,7 +23,7 @@ import Fade from "@mui/material/Fade";
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import Stack from '@mui/material/Stack';
-
+import DisplayLogs from "./Logs/DisplayLogs";
 
 
 
@@ -99,12 +99,12 @@ const Nodes = () => {
         console.log(nodes);
       });
     }
-    else if(newValue == 2){
-      axios.get(url + "logs/").then((res) => {
-        setLogs(res.data.logs);
-        console.log(res.data.logs);
-      })
-    }
+    // else if(newValue == 2){
+    //   axios.get(url + "logs/").then((res) => {
+    //     setLogs(res.data.logs);
+    //     console.log(res.data.logs);
+    //   })
+    // }
   };
 
   const marks = [
@@ -814,7 +814,7 @@ const Nodes = () => {
           </ul> */}
         </TabPanel>
         <TabPanel value={tab} index={2}>
-
+          <DisplayLogs/>
         </TabPanel>
       </Box>
       {/* <Box sx={{ width: "30%" }}>

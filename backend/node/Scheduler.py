@@ -13,9 +13,9 @@ except Exception as e:
     pass
 
 TOGGLE_SUCCESS = "Lights switched {} successfully."
-TOGGLE_FAILURE = "Switching {} lights failed for the following nodes:"
+TOGGLE_FAILURE = "Switching {} lights failed for the following nodes: "
 DIM_SUCCESS = 'Lights dimmed to {}% successfully.'
-DIM_FAILURE = 'Dimming lights to {}% failed for the following nodes:'
+DIM_FAILURE = 'Dimming lights to {}% failed for the following nodes: '
 
 function_mapping = {
     'set_dim_to' : MASTER.set_dim_value,
@@ -260,8 +260,8 @@ def sync_to_schedule():
                 run_date=datetime.datetime.now() + timedelta(seconds=15),
                 timezone = 'Asia/Kolkata',
             )
-        while MASTER.scheduledJobStatus is True:
-            continue
+            while MASTER.scheduledJobStatus is True:
+                continue
         if len(MASTER.failed_nodes) > 0:
             msg = ", ".join(MASTER.failed_nodes)
             Notification.objects.create(
