@@ -16,5 +16,6 @@ urlpatterns = [
     path('activateSchedule/',views.enable_disable_schedule),
     path('deleteNode/',views.delete_node),
     path('getRetryJobStatus/',views.getRetryJobStatus),
-    path('logs/',views.logs)
+    path('logs/',views.logs),
+    path('alerts/',views.alerts),
 ]

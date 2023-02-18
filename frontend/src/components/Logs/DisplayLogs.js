@@ -6,13 +6,13 @@ import url from "../BaseURL";
 import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
-
+import Skeleton from '@mui/material/Skeleton';
 
 export default function DisplayLogs(){
     const [data,setData] = useState([]);
     let [page, setPage] = useState(1);
-
-    const PER_PAGE = 6;
+    const [loading,setLoading] = useState(false);
+    const PER_PAGE = 10;
 
     const count = Math.ceil(data.length/ PER_PAGE);
     const _DATA = usePagination(data, PER_PAGE);
@@ -22,8 +22,10 @@ export default function DisplayLogs(){
         _DATA.jump(p);
     };
     useEffect(() => {
+        setLoading(true);
         axios.get(url + "logs/").then((res) => {
             setData(res.data.logs);
+            setLoading(false);
         });
     }, []);
 
@@ -44,7 +46,25 @@ export default function DisplayLogs(){
                 }}
             />
             <Stack spacing={1}>
-                {
+                {loading ? (
+                    <div>
+                        <Skeleton 
+                            variant="rounded"
+                            animation="wave"
+                            height='20%'
+
+                        />
+                        <Skeleton 
+                            variant="rounded"
+                            animation="wave"
+                            height='20%'
+
+                        />
+                    </div>
+                    
+                
+                ) : (
+                
                     _DATA.currentData().map((record) => {
                         const date = new Date(record.timestamp);
                         const day = date.toLocaleString('en-IN',{day:'2-digit'});
@@ -71,7 +91,7 @@ export default function DisplayLogs(){
                         </Alert>
                         )
                     })
-                }
+                )}
             </Stack>
 
         </div>

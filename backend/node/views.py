@@ -559,6 +559,31 @@ def logs(request):
             'operation_type': record.operation_type,
             'success': record.success,
             'message': record.message,
-            'timestamp': record.timestamp.astimezone(tz=get_current_timezone())
+            'timestamp': record.timestamp.astimezone(tz=get_current_timezone()),
         })
     return Response({'logs':data})
+
+@api_view(['GET','PUT'])
+def alerts(request):
+    if request.method == "GET":
+        data = []
+        to_filter = {'success' : False, 'is_read': False}
+        for record in Notification.objects.all().filter(**to_filter).order_by('-timestamp'):
+            timestamp = record.timestamp.astimezone(tz=get_current_timezone())
+            timeString = timestamp.strftime("%d/%b/%y %I:%M %p")
+            data.append({
+                'message': record.message,
+                'receivedTime': timeString,
+                'image': "https://img.icons8.com/emoji/48/null/exclamation-mark-emoji.png",
+                'id':record.pk
+            })
+        return Response({'alerts':data})
+    elif request.method == "PUT":
+        request_data = json.loads(request.body)
+        params = request_data['params']
+        if 'id_array' in params:
+            for id in params['id_array']:
+                notif = Notification.objects.get(pk=id)
+                notif.is_read = True
+                notif.save()
+        return Response({'Success':True})
