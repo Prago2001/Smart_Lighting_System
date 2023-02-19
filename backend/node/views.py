@@ -510,3 +510,123 @@ def getRetryJobStatus(response):
         return Response({'operation':True})
     else:
         return Response({'operation':False,'nodes':failedNodes})
+
+@api_view(['POST'])
+def createSchedule(request):
+    #expects schedule object in req data 
+    # Won't be used much as method below creates schedule with slots
+    schedule = request.body.decode('utf-8')
+    schedule = json.loads(schedule)
+    schedule_name = schedule['schedule_name']
+    currently_active = schedule['currently_active']
+
+    schedule = Schedule(schedule_name = schedule_name,currently_active = currently_active)
+    schedule.save()
+
+    return Response(data={"message":"Success"})
+
+@api_view(['GET'])
+def getAllSchedules(request):
+    schedules = Schedule.objects.all()
+    return Response({'schedules':schedules})
+    
+@api_view(['GET'])
+def getScheduleByName(request):
+    #expects schedule name in url
+    name = request.GET.get('schedule_name')
+    schedule = Schedule.objects.get(schedule_name = name)
+    return Response({'schedule':schedule})
+
+@api_view(['GET'])
+def getActiveSchedule(request):
+    schedule = Schedule.objects.get(currently_active = True)
+    return Response({'active_schedule':schedule})
+
+@api_view(['PUT'])
+def activateSchedule(request):
+    #expects schedule name in request data
+    schedule = request.body.decode('utf-8')
+    schedule = json.loads(schedule)
+    schedule_name = schedule['schedule_name']
+
+    past_schedule = Schedule.objects.get(currently_active = True)
+    past_schedule.currently_active = False
+    past_schedule.save()
+
+    activation_schedule = Schedule.objects.get(schedule_name = schedule_name)
+    activation_schedule.currently_active = True
+    activation_schedule.save()
+
+    return Response(data={"message":"Success"})
+
+@api_view(['DELETE'])
+def deleteSchedule(request):
+    #expects schedule_name in url
+    schedule_name = request.GET.get('schedule_name')
+    Schedule.objects.get(schedule_name = schedule_name).delete()
+
+    return Response(data={"message":"Success"})
+
+@api_view(['POST'])
+def createScheduleWithSlots(request):
+    # 'n' no. of slots with a shedule name and if to be set active , is expected in body
+    '''
+    {
+        n : 3
+        schedule_name : S1
+        to_be_active : True/False
+        schedules_list : [ [1.00,2.00],[1.00,2.00],[1.00,2.00] ]
+    }
+    
+    '''
+    body = request.body.decode('utf-8')
+    body = json.loads(body)
+    schedule_name = body['schedule_ame']
+    to_be_active = body['to_be_active']
+
+    schedule = Schedule(schedule_name = schedule_name,currently_active = to_be_active)
+    schedule.save()
+
+    no_of_schedules = body['no_of_schedules']
+    schedules_list = body['schedules_list']
+    # schedules_list : [ [1.00,2.00],[1.00,2.00],[1.00,2.00] ]
+    
+    
+    for i in range(no_of_schedules):
+        start =  datetime.time(int(schedules_list[i][0]),int((schedules_list[i][0]%1)*100))   
+        end = datetime.time(int(schedules_list[i][1]),int((schedules_list[i][1]%1)*100))
+        slot = Slot(start = start,end = end,schedule = schedule)
+        slot.save()
+        
+
+    return Response(data={"message":"Success"})
+
+@api_view(['GET'])
+def getSlotsByScheduleName(request):
+    #expects schedule name in url
+    schedule_name = request.GET.get('schedule_name')
+    schedule = Schedule.objects.get(schedule_name = schedule_name)
+
+    slots = Slot.objects.filter(schedule = schedule)
+    return Response({'slots':slots})
+
+@api_view(['PUT'])
+def changeASlotFromSchedule(request):
+    #expects schedule name , 'n'th slot to be changed, new_start, new_end
+    body = request.body.decode('utf-8')
+    body = json.loads(body)
+    
+    schedule = Schedule.objects.get(schedule_name = body['schedule_name'])
+
+    slots = Slot.objects.filter(schedule = schedule)
+    
+    n = body['n']
+    new_start = body['new_start']
+    new_end = body['new_end']
+
+    slot_to_change = slots[n-1]
+    slot_to_change.start = datetime.time(int(new_start),int((new_start%1)*100))
+    slot_to_change.end = datetime.time(int(new_end),int((new_end%1)*100))
+
+    slot_to_change.save()
+    return Response({'slots':slots})
