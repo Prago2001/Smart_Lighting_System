@@ -105,6 +105,15 @@ def updater_start():
         timezone='Asia/Kolkata'
     )
     add_sync_jobs()
+    scheduler.add_job(
+        delete_logs,
+        trigger='interval',
+        id='delete_logs',
+        name="Delete logs after every 48 hours",
+        days=2,
+        next_run_time=datetime.datetime.combine(datetime.date.today() + timedelta(days=1),datetime.time(hour=1),tzinfo=get_current_timezone()),
+        timezone='Asia/Kolkata'
+    )
     scheduler.start()
     for job in scheduler.get_jobs():
         print("name: %s, id: %s, trigger: %s, next run: %s, handler: %s" % (job.name,job.id, job.trigger, job.next_run_time, job.func))
@@ -321,3 +330,6 @@ def add_sync_jobs():
                         name='sync_to_schedule'
                     )
     
+def delete_logs():
+    threshold = datetime.datetime.now(tz=get_current_timezone()) - timedelta(days=2)
+    Notification.objects.filter(timestamp__lt=threshold).delete()

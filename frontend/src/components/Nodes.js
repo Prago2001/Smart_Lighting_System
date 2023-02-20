@@ -5,7 +5,8 @@ import NodeItem from "./NodeItem";
 import { Link } from "react-router-dom";
 import Checkbox from "@mui/material/Checkbox";
 import CircularProgress from "@mui/material/CircularProgress";
-import { green } from "@mui/material/colors";
+import { green,yellow } from "@mui/material/colors";
+import {darken} from "@mui/material/styles";
 import url from "./BaseURL";
 import { useNodeContext } from "../NodeContext";
 import PropTypes from "prop-types";
@@ -24,7 +25,6 @@ import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import Stack from '@mui/material/Stack';
 import DisplayLogs from "./Logs/DisplayLogs";
-
 
 
 
@@ -126,14 +126,14 @@ const Nodes = () => {
     },
   ];
 
-  const buttonSx = {
-    ...(loading && {
-      bgcolor: green[700],
-      "&:hover": {
-        bgcolor: green[900],
-      },
-    }),
-  };
+  // const buttonSx = {
+  //   ...(loading && {
+  //     bgcolor: green[700],
+  //     "&:hover": {
+  //       bgcolor: green[900],
+  //     },
+  //   }),
+  // };
 
   const handleChange = (event, newValue) => {
 
@@ -461,7 +461,7 @@ const Nodes = () => {
           <Button
               className="col-start-4 col-span-2"
               variant="contained"
-              sx={buttonSx}
+              // sx={buttonSx}
               //disabled={syncloading}
               color={scheduleStatus ? 'error' : 'primary'}
               onClick={() => {
@@ -534,8 +534,15 @@ const Nodes = () => {
             </Dialog>
             <Button
               className="col-start-6 col-span-2"
-              variant="outlined"
-              sx={buttonSx}
+              // color="warning"
+              variant="contained"
+              sx = {{
+                color:'black',
+                backgroundColor:'#FFFF00',
+                ':hover' : {
+                  backgroundColor: darken('#FFFF00', 0.1),
+                }
+              }}
               disabled={syncloading || !scheduleStatus}
               onClick={() => {
                 setSyncloading(true);
@@ -577,7 +584,7 @@ const Nodes = () => {
             <Button
               className="col-start-8 col-span-2"
               variant="contained"
-              sx={buttonSx}
+              // sx={buttonSx}
               disabled={applyloading}
               onClick={() => {
                 //run validation
@@ -633,7 +640,7 @@ const Nodes = () => {
               <Button
                 size="large"
                 variant="contained"
-                sx={buttonSx}
+                // sx={buttonSx}
                 disabled={loading}
                 onClick={handleButtonClick}
               >
