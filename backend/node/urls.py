@@ -16,4 +16,13 @@ urlpatterns = [
     path('activateSchedule/',views.enable_disable_schedule),
     path('deleteNode/',views.delete_node),
     path('getRetryJobStatus/',views.getRetryJobStatus),
+    path('createSchedule/',views.createScheduleWithSlots),
+    path('getAllSchedules/',views.getAllSchedules),
+    path('getScheduleByName/<str:schedule_name>/',views.getScheduleByName),
+    path('getActiveSchedule/',views.getActiveSchedule),
+    path('activateSchedule/',views.activateSchedule),
+    path('deleteSchedule/<str:schedule_name>/',views.deleteSchedule),
+    path('getSlotsBySchedule/<str:schedule_name>/',views.getSlotsByScheduleName),
+    path('changeSlot/',views.changeASlotFromSchedule)
+
 ]
