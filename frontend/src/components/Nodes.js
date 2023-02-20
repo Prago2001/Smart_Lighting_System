@@ -54,13 +54,15 @@ const Nodes = () => {
   const [pointerEvent, setPointerEvent] = useState(false);
   const [telemetryStatus, setTelemetryStatus] = useState(true);
   const [scheduleStatus, setScheduleStatus] = useState(true);
-  // AlerDialog open or close?
+  // AlertDialog open or close?
   const [open, setOpen] = useState(false);
   const [displaySuccessTab,setDisplaySuccessTab] = useState(false);
   const [retryAlert,setRetryAlert] = useState(false);
   const [retryNodes,setRetryNodes] = useState([]);
   const [displayAlertTab,setDisplayAlertTab] = useState(false);
   const [failedNodes,setFailedNodes] = useState([]);
+  // Add New Schedule
+  const [openpallet, setOpenpallet] = useState(false);
 
   const handleChangeTab = (event, newValue) => {
     setTab(newValue);
@@ -385,7 +387,7 @@ const Nodes = () => {
         </div>
       </div>
       
-        
+{/* --------------------------------------------------------------------------------------------------------------------------------------------------------        */}
 
       <Box className="p-6 m-4">
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -399,7 +401,46 @@ const Nodes = () => {
           </Tabs>
         </Box>
         <TabPanel value={tab} index={0}>
-          <div className="flex grid grid-flow-row-dense grid-cols-9 grid-rows-2 gap-4 items-center p-4 bg-blue-200 bg-opacity-25 rounded-md">
+        <Button
+              className="col-start-4 col-span-2"
+              variant="contained"
+              sx={buttonSx}
+              //disabled={syncloading}
+              color='primary'
+              onClick={() => {
+                // if(scheduleStatus)
+                // {
+                //   setOpen(true);
+                // }
+                // else {
+                // axios
+                //   .put(url + "activateSchedule/",{
+                //     params: {
+                //       status: !scheduleStatus,
+                //     },
+                //   }
+                //   )
+                //   .then((res) => {
+                //   setScheduleStatus(!scheduleStatus);
+                // });
+                setOpenpallet(true);
+              }}
+            >
+              Add New Schedule
+            </Button>
+            <Dialog 
+              open={openpallet}
+              onClose={() => {setOpenpallet(false)}}
+              aria-labelledby="alert-dialog-title"
+              aria-describedby="alert-dialog-description"
+              maxWidth="false"
+            >
+              <DialogTitle id="alert-dialog-title">
+                {"Add New Schedule"}
+              </DialogTitle>
+              <DialogContent style={{width: 1300}}>
+                <DialogContentText id="alert-dialog-description">
+                <div className="flex grid grid-flow-row-dense grid-cols-9 grid-rows-2 gap-4 items-center p-4 bg-blue-200 bg-opacity-25 rounded-md">
             <div className="flex col-span-3 items-center justify-center p-4 rounded-md ">
               <LightModeIcon className="text-yellow-500" />
               <span className="font-bold text-gray-700">
@@ -448,6 +489,80 @@ const Nodes = () => {
                 </div>
               </div>
             ))}
+          </div>
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => {setOpenpallet(false)}}>Cancel</Button>
+                <Button onClick={() => {
+                                         // Add Schedule Rqst goes here
+                //   axios
+                //   .put(url + "activateSchedule/",{
+                //     params: {
+                //       status: !scheduleStatus,
+                //     },
+                //   }
+                //   )
+                //   .then((res) => {
+                //   setScheduleStatus(!scheduleStatus);
+                //   setOpenpallet(false);
+                // });
+                setOpenpallet(false);
+                }} 
+                autoFocus>
+                  Add
+                </Button>
+              </DialogActions>
+            </Dialog>
+          <div className="flex grid grid-flow-row-dense grid-cols-9 grid-rows-2 gap-4 items-center p-4 bg-blue-200 bg-opacity-25 rounded-md">
+            <div className="flex col-span-3 items-center justify-center p-4 rounded-md ">
+              <LightModeIcon className="text-yellow-500" />
+              <span className="font-bold text-gray-700">
+                &nbsp; Sunrise Time: &nbsp;
+              </span>
+              <span className="p-4 bg-gray-50 rounded-md shadow-md text-white bg-blue-500 font-bold">
+                {sun.sunrise}
+              </span>
+            </div>
+            <div className="flex col-span-3 items-center justify-center p-4 rounded-md ">
+              <div className="flex col-span-3 items-center justify-start p-4 bg-blue-100 rounded-md">
+                <HourglassBottomIcon className="text-gray-700" />
+                <span className="font-bold text-gray-700">
+                  &nbsp; For Non-Peak Hours: &nbsp;
+                </span>
+              </div>
+            </div>
+            <div className="flex col-span-3 items-center justify-center rounded-md ">
+              <DarkModeIcon className="text-blue-500" />
+              <span className="font-bold text-gray-700">
+                &nbsp; Sunset Time: &nbsp;
+              </span>
+              <span className="p-4 bg-gray-50 rounded-md shadow-md text-white bg-blue-500 font-bold">
+                {sun.sunset}
+              </span>
+            </div>
+
+            {/* {autoSchedule.map((s, idx) => (
+              <div className="flex col-start-3 col-span-5 items-center justify-center rounded-md">
+                <div className="flex items-center justify-center rounded-md mr-16">
+                  <div className="flex col-start-3 col-span-5 items-center justify-center rounded-md">
+                    <div className="flex items-center justify-center rounded-md mr-16">
+                      <TimeSelecter
+                        val={s}
+                        idx={idx}
+                        sch={autoSchedule}
+                        setSch={setAutoSchedule}
+                      />
+                    </div>
+                  </div> */}
+                  {/* <div className="flex col-start-8 col-span-1 items-center justify-center p-4 rounded-md">
+                  <div className="flex items-center justify-center rounded-md mr-16">
+                    <RemoveCircleIcon className="text-red-500" />
+                  </div>
+                </div> */}
+                {/* </div>
+              </div>
+            ))} */}
           </div>
           <div className="flex grid grid-flow-row grid-cols-9 gap-4 grid-rows-1 p-4 bg-blue-200 bg-opacity-25 rounded-md">
           <Button
