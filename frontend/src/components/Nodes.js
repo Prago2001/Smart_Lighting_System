@@ -25,7 +25,7 @@ import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import Stack from '@mui/material/Stack';
 import DisplayLogs from "./Logs/DisplayLogs";
-
+import ListOfAllSchedules from "./Schedules/ListOfSchedules";
 
 
 
@@ -403,7 +403,8 @@ const Nodes = () => {
           >
             <Tab label="AUTO" {...a11yProps(0)} />
             <Tab label="MANUAL" {...a11yProps(1)} />
-            <Tab label="LOGS" {...a11yProps(2)}/>
+            <Tab label="SCHEDULES" {...a11yProps(2)} />
+            <Tab label="LOGS" {...a11yProps(3)}/>
           </Tabs>
         </Box>
         <TabPanel value={tab} index={0}>
@@ -821,6 +822,9 @@ const Nodes = () => {
           </ul> */}
         </TabPanel>
         <TabPanel value={tab} index={2}>
+          <ListOfAllSchedules />
+        </TabPanel>
+        <TabPanel value={tab} index={3}>
           <DisplayLogs/>
         </TabPanel>
       </Box>
