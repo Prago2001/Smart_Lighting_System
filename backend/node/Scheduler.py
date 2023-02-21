@@ -67,44 +67,44 @@ def fetchSunModel() :
         count += 1
 
     # Changing scheduled job at sunrise
-    scheduler.add_job(
-                        sync_to_schedule,
-                        trigger='cron',
-                        id = "sync_sunrise",
-                        hour = s["sunrise"].hour,
-                        minute = s["sunrise"].minute,
-                        timezone = 'Asia/Kolkata',
-                        replace_existing=True,
-                        name='sync_to_schedule'
-    )
-    # Changing scheduled job at sunset
-    scheduler.add_job(
-                        sync_to_schedule,
-                        trigger='cron',
-                        id = "sync_sunset",
-                        hour = s["sunset"].hour,
-                        minute = s["sunset"].minute,
-                        timezone = 'Asia/Kolkata',
-                        replace_existing=True,
-                        name='sync_to_schedule'
-    )
+    # scheduler.add_job(
+    #                     sync_to_schedule,
+    #                     trigger='cron',
+    #                     id = "sync_sunrise",
+    #                     hour = s["sunrise"].hour,
+    #                     minute = s["sunrise"].minute,
+    #                     timezone = 'Asia/Kolkata',
+    #                     replace_existing=True,
+    #                     name='sync_to_schedule'
+    # )
+    # # Changing scheduled job at sunset
+    # scheduler.add_job(
+    #                     sync_to_schedule,
+    #                     trigger='cron',
+    #                     id = "sync_sunset",
+    #                     hour = s["sunset"].hour,
+    #                     minute = s["sunset"].minute,
+    #                     timezone = 'Asia/Kolkata',
+    #                     replace_existing=True,
+    #                     name='sync_to_schedule'
+    # )
 
 
 
 
 def updater_start():
 
-    scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values')
+    # scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values')
     scheduler.add_job(fetchSunModel, 'cron', id='sunmodel', hour=0, minute=15, timezone='Asia/Kolkata',name='sunrise_sunset_values')
-    scheduler.add_job(
-        sync_to_schedule,
-        trigger='interval',
-        minutes=30,
-        id='sync_to_auto',
-        name='sync_every_half_hour',
-        timezone='Asia/Kolkata'
-    )
-    add_sync_jobs()
+    # scheduler.add_job(
+    #     sync_to_schedule,
+    #     trigger='interval',
+    #     minutes=30,
+    #     id='sync_to_auto',
+    #     name='sync_every_half_hour',
+    #     timezone='Asia/Kolkata'
+    # )
+    # add_sync_jobs()
     scheduler.add_job(
         delete_logs,
         trigger='interval',

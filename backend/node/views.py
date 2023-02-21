@@ -293,52 +293,52 @@ def changeSchedule(request):
         db_slot.end = new_end
         db_slot.intensity = new_intensity
         db_slot.save()
-        # scheduler.add_job(
-        #             function_mapping['set_dim_to'],
-        #             args=[db_slot.intensity],
-        #             trigger='cron',
-        #             id = db_slot.__str__(),
-        #             hour = db_slot.start.hour,
-        #             minute = db_slot.start.minute,
-        #             timezone = 'Asia/Kolkata',
-        #             replace_existing=True,
-        #             name='dimming_job'
-        #         )
-        if db_slot.start.strftime("%H:%M") == MASTER.SunSet:
-            scheduler.add_job(
-                        sync_to_schedule,
-                        trigger='cron',
-                        id = "sync_sunset",
-                        hour = db_slot.start.hour,
-                        minute = db_slot.start.minute,
-                        timezone = 'Asia/Kolkata',
-                        replace_existing=True,
-                        name='sync_to_schedule'
-            )
-        else:
-            id = "sync_" + db_slot.__str__()
-            scheduler.add_job(
-                        sync_to_schedule,
-                        trigger='cron',
-                        id = id,
-                        hour = db_slot.start.hour,
-                        minute = db_slot.start.minute,
-                        timezone = 'Asia/Kolkata',
-                        replace_existing=True,
-                        name='sync_to_schedule'
-                    )
+        # # scheduler.add_job(
+        # #             function_mapping['set_dim_to'],
+        # #             args=[db_slot.intensity],
+        # #             trigger='cron',
+        # #             id = db_slot.__str__(),
+        # #             hour = db_slot.start.hour,
+        # #             minute = db_slot.start.minute,
+        # #             timezone = 'Asia/Kolkata',
+        # #             replace_existing=True,
+        # #             name='dimming_job'
+        # #         )
+        # if db_slot.start.strftime("%H:%M") == MASTER.SunSet:
+        #     scheduler.add_job(
+        #                 sync_to_schedule,
+        #                 trigger='cron',
+        #                 id = "sync_sunset",
+        #                 hour = db_slot.start.hour,
+        #                 minute = db_slot.start.minute,
+        #                 timezone = 'Asia/Kolkata',
+        #                 replace_existing=True,
+        #                 name='sync_to_schedule'
+        #     )
+        # else:
+        #     id = "sync_" + db_slot.__str__()
+        #     scheduler.add_job(
+        #                 sync_to_schedule,
+        #                 trigger='cron',
+        #                 id = id,
+        #                 hour = db_slot.start.hour,
+        #                 minute = db_slot.start.minute,
+        #                 timezone = 'Asia/Kolkata',
+        #                 replace_existing=True,
+        #                 name='sync_to_schedule'
+        #             )
         
-        if db_slot.end.strftime("%H:%M") == MASTER.SunRise:
-            scheduler.add_job(
-                        sync_to_schedule,
-                        trigger='cron',
-                        id = "sync_sunrise",
-                        hour = db_slot.end.hour,
-                        minute = db_slot.end.minute,
-                        timezone = 'Asia/Kolkata',
-                        replace_existing=True,
-                        name='sync_to_schedule'
-                    )
+        # if db_slot.end.strftime("%H:%M") == MASTER.SunRise:
+        #     scheduler.add_job(
+        #                 sync_to_schedule,
+        #                 trigger='cron',
+        #                 id = "sync_sunrise",
+        #                 hour = db_slot.end.hour,
+        #                 minute = db_slot.end.minute,
+        #                 timezone = 'Asia/Kolkata',
+        #                 replace_existing=True,
+        #                 name='sync_to_schedule'
+        #             )
         row += 1
     for job in scheduler.get_jobs():
         print("name: %s, id: %s, trigger: %s, next run: %s, handler: %s" % (job.name,job.id, job.trigger, job.next_run_time, job.func))

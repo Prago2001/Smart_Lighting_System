@@ -16,8 +16,8 @@ services:
     environment:
       - "DJANGO_SECRET_KEY=django-insecure-eg7d=r5=!&-zfll#z!t*$e6e5e=d+7i4t495*_k_@^l-z+mpw)"
       - "DJANGO_DEBUG=True"
-    devices:
-      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    # devices:
+    #   - "/dev/ttyUSB0:/dev/ttyUSB0"
   db:
     image: postgres:13
     volumes:

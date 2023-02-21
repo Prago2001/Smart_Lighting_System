@@ -8,7 +8,7 @@ class NodeConfig(AppConfig):
 
     def ready(self):
         try:
-            from .Coordinator import MASTER
+            # from .Coordinator import MASTER
             from .models import Slave,Schedule,Slot
             import datetime
             from .Scheduler import fetchSunModel,updater_start,add_dim_jobs_on_startup,sync_to_schedule
@@ -16,27 +16,27 @@ class NodeConfig(AppConfig):
             from .views import changeSchedule
             # Slave.objects.all().delete()
             # counter = Slave.objects.count()+1
-            for node in MASTER.discover_nodes():
-                if not Slave.objects.filter(unique_id = node._64bit_addr).exists():
-                    slave = Slave(
-                        unique_id = node._64bit_addr, 
-                        # name = "Street Light "+str(counter),
-                        name = node.node_name,
-                        current = node.get_current_value(),
-                        temperature = node.get_temperature_value(),
-                        mains_val = node.get_mains_value(),
-                        dim_val = node.get_dim_value()
-                    )
-                    # node.set_node_id("Street Light "+str(counter))
-                    # counter+=1
-                    slave.save()
-                else:
-                    slave = Slave.objects.get(unique_id=node._64bit_addr)
+            # for node in MASTER.discover_nodes():
+            #     if not Slave.objects.filter(unique_id = node._64bit_addr).exists():
+            #         slave = Slave(
+            #             unique_id = node._64bit_addr, 
+            #             # name = "Street Light "+str(counter),
+            #             name = node.node_name,
+            #             current = node.get_current_value(),
+            #             temperature = node.get_temperature_value(),
+            #             mains_val = node.get_mains_value(),
+            #             dim_val = node.get_dim_value()
+            #         )
+            #         # node.set_node_id("Street Light "+str(counter))
+            #         # counter+=1
+            #         slave.save()
+            #     else:
+            #         slave = Slave.objects.get(unique_id=node._64bit_addr)
 
-                    previous_mains_val = slave.mains_val
-                    previous_dim_val = slave.dim_val
-                    node.set_mains_value(previous_mains_val)
-                    node.set_dim_value(previous_dim_val)
+            #         previous_mains_val = slave.mains_val
+            #         previous_dim_val = slave.dim_val
+            #         node.set_mains_value(previous_mains_val)
+            #         node.set_dim_value(previous_dim_val)
             try:
                 current_schedule = Schedule.objects.get(currently_active = True)
                 
@@ -76,7 +76,7 @@ class NodeConfig(AppConfig):
 
             fetchSunModel()
             updater_start()
-            sync_to_schedule()
+            # sync_to_schedule()
             
             # add_dim_jobs_on_startup()
             # add_sync_jobs()
