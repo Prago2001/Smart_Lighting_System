@@ -243,6 +243,8 @@ const Nodes = () => {
       console.log(res);
       setSun({ sunrise: res.data.sunrise, sunset: res.data.sunset });
       setAutoSchedule(res.data.schedule);
+      localStorage.setItem('sunrise',JSON.stringify(res.data.sunrise_ts));
+      localStorage.setItem('sunset',JSON.stringify(res.data.sunset_ts));
     });
   }, []);
 

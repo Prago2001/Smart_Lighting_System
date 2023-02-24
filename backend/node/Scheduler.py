@@ -49,6 +49,8 @@ def fetchSunModel() :
 
     city = LocationInfo(name="pune", region="India", timezone="Asia/Kolkata", latitude=18.6452489, longitude=73.92318563785392)
     s = sun(city.observer, tzinfo=city.timezone)
+    MASTER.sunrise_timestamp = s['sunrise']
+    MASTER.sunset_timestamp = s['sunset']
     MASTER.SunRise = s["sunrise"].strftime("%H:%M")
     MASTER.SunSet = s["sunset"].strftime("%H:%M")
 # Coordinator().autoSchedule[0]['from'] = s["sunset"]

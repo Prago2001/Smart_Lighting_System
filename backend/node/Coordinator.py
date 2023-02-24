@@ -142,6 +142,8 @@ class Coordinator(metaclass=Singleton):
         self.manualJobStatus = False # If true then manual operation for some nodes has failed and job has been scheduled. After job is executed it will get toggled to False
         self.scheduledJobStatus = False
         self.failed_nodes = []
+        self.sunrise_timestamp = None
+        self.sunset_timestamp = None
 
     def discover_nodes(self) -> List[Remote]:
         self.nodes : List[Remote] = []

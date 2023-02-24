@@ -1,9 +1,17 @@
+import React, { useState,useEffect } from "react";
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import CreateNewSchedule from './CreateNewSchedule';
 
 function ListOfAllSchedules(){
+
+    const [newSchedule,setNewSchedule] = useState(false);
+
+    const handleCreateScheduleClose = () => {
+        setNewSchedule(false);
+    }
 
     return (
         <div>
@@ -13,9 +21,15 @@ function ListOfAllSchedules(){
             <div className='grid justify-end my-6'>
                 <Button
                     variant='contained'
+                    onClick={() => setNewSchedule(true)}
                 >
                     Create new schedule
                 </Button>
+                {newSchedule && 
+                <CreateNewSchedule 
+                    open={true} 
+                    onClose={handleCreateScheduleClose}/>
+                }
             </div>
             <Stack spacing={1}>
                 <ScheduleItem />
@@ -49,23 +63,6 @@ function ScheduleItem(){
                     </Button>
                 </ButtonGroup>
             </div>
-            {/* <div className='flex col-span-3 justify-end'>
-                <Button
-                    variant='outlined'
-                    color='primary'
-                >
-                    VIEW/EDIT
-                </Button>
-            </div>
-            <div className='flex col-span-3 justify-start ite'>
-                <Button
-                    variant='contained'
-                    color='error'
-                >
-                    DELETE
-                </Button>
-            </div> */}
-
         </div>
     )
 

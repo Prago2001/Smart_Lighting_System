@@ -269,6 +269,8 @@ def getSchedule(request):
         )
     data['sunrise'] = MASTER.SunRise
     data['sunset'] = MASTER.SunSet
+    data['sunrise_ts'] = MASTER.sunrise_timestamp
+    data['sunset_ts'] = MASTER.sunset_timestamp
     return Response(data)
 
 
