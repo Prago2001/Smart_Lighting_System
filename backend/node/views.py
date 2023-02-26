@@ -589,3 +589,212 @@ def alerts(request):
                 notif.is_read = True
                 notif.save()
         return Response({'Success':True})
+    
+
+@api_view(['GET'])
+def getAllSchedules(request):
+    schedules = Schedule.objects.all()
+    return Response({'schedules':schedules})
+    
+@api_view(['GET'])
+def getScheduleByName(request):
+    #expects schedule name in url
+    name = request.GET.get('schedule_name')
+    schedule = Schedule.objects.get(schedule_name = name)
+    return Response({'schedule':schedule})
+
+@api_view(['GET'])
+def getActiveSchedule(request):
+    schedule = Schedule.objects.get(currently_active = True)
+    return Response({'active_schedule':schedule})
+
+@api_view(['PUT'])
+def activateSchedule(request):
+    #expects schedule name in request data
+    schedule = request.body.decode('utf-8')
+    schedule = json.loads(schedule)
+    schedule_name = schedule['schedule_name']
+
+    past_schedule = Schedule.objects.get(currently_active = True)
+    past_schedule.currently_active = False
+    past_schedule.save()
+
+    activation_schedule = Schedule.objects.get(schedule_name = schedule_name)
+    activation_schedule.currently_active = True
+    activation_schedule.save()
+
+
+    for job in scheduler.get_jobs():
+        if job.name == 'sync_to_schedule':
+            job.remove()
+
+    active_slots = Slot.objects.filter(schedule = activation_schedule).order_by('id')
+    
+    for slot in active_slots:
+    
+        if slot.start.strftime("%H:%M") == MASTER.SunSet:
+            scheduler.add_job(
+                        sync_to_schedule,
+                        trigger='cron',
+                        id = "sync_sunset",
+                        hour = slot.start.hour,
+                        minute = slot.start.minute,
+                        timezone = 'Asia/Kolkata',
+                        replace_existing=True,
+                        name='sync_to_schedule'
+            )
+        else:
+            id = "sync_" + slot.__str__()            
+            scheduler.add_job(
+                        sync_to_schedule,
+                        trigger='cron',
+                        id = id,
+                        hour = slot.start.hour,
+                        minute = slot.start.minute,
+                        timezone = 'Asia/Kolkata',
+                        replace_existing=True,
+                        name='sync_to_schedule'
+                    )
+        
+        if slot.end.strftime("%H:%M") == MASTER.SunRise:
+            scheduler.add_job(
+                        sync_to_schedule,
+                        trigger='cron',
+                        id = "sync_sunrise",
+                        hour = slot.end.hour,
+                        minute = slot.end.minute,
+                        timezone = 'Asia/Kolkata',
+                        replace_existing=True,
+                        name='sync_to_schedule'
+                    )
+
+
+    return Response(data={"message":"Success"})
+
+@api_view(['DELETE'])
+def deleteSchedule(request):
+    #expects schedule_name in url
+    schedule_name = request.GET.get('schedule_name')
+    Schedule.objects.get(schedule_name = schedule_name).delete()
+
+    return Response(data={"message":"Success"})
+
+@api_view(['POST','PUT'])
+def createOrEditSchedule(request):
+    # 'n' no. of slots with a shedule name and if to be set active , is expected in body
+    '''
+    {
+        no_of_slots : 3
+        schedule_name : S1
+        make_active : True/False
+        schedule : { object same as one received from frontend in changeSchedule }
+    }
+    
+    '''
+    if request.method == "POST":
+        body = request.body.decode('utf-8')
+        body = json.loads(body)
+        schedule_name = body['schedule_ame']
+        make_active = body['make_active']
+
+        schedule_object = Schedule(schedule_name = schedule_name,currently_active = make_active)
+        schedule_object.save()
+
+        no_of_slots = body['no_of_slots']
+        schedule = body['schedule']
+        
+        for i in range(no_of_slots):
+            row = schedule[i]
+            start = parser.isoparse(row['from']).astimezone(pytz.timezone('Asia/Kolkata'))
+            end = parser.isoparse(row['to']).astimezone(pytz.timezone('Asia/Kolkata'))
+            intensity = row['i']
+
+            #start =  datetime.time(int(schedules_list[i][0]),int((schedules_list[i][0]%1)*100))   
+            #end = datetime.time(int(schedules_list[i][1]),int((schedules_list[i][1]%1)*100))
+            slot = Slot(start = start,end = end,intensity = intensity,schedule = schedule_object)
+            slot.save()
+            
+
+        return Response(data={"message":"Success"})
+    
+    else:
+        body = request.body.decode('utf-8')
+        body = json.loads(body)
+        schedule_name = body['schedule_ame']
+        make_active = body['make_active']
+
+        schedule_object = Schedule.objects.get(schedule_name = schedule_name)
+        if(schedule_object.currently_active != make_active):
+            schedule_object.currently_active = make_active
+            schedule_object.save()
+
+        slots = Slot.objects.filter(schedule = schedule_object).order_by('id')
+
+        no_of_slots = len(slots)
+        schedule = body['schedule']
+        
+        index = 0
+        for i in range(no_of_slots):
+            row = schedule[i]
+            start = parser.isoparse(row['from']).astimezone(pytz.timezone('Asia/Kolkata'))
+            end = parser.isoparse(row['to']).astimezone(pytz.timezone('Asia/Kolkata'))
+            intensity = row['i']
+
+            slots[index].start = start
+            slots[index].end = end
+            slots[index].intensity = intensity
+            
+            slots[index].save()
+
+            index+=1
+            
+
+        return Response(data={"message":"Success"})
+
+
+@api_view(['GET'])
+def getSlotsByScheduleName(request):
+    #expects schedule name in url
+    schedule_name = request.GET.get('schedule_name')
+    schedule = Schedule.objects.get(schedule_name = schedule_name)
+
+    slots = Slot.objects.filter(schedule = schedule).order_by('id')
+
+    data = {'slots':[]}
+
+    YEAR = datetime.date.today().year
+    MONTH = datetime.date.today().month
+    DAY = datetime.date.today().day
+
+    for row in slots:
+        data['slots'].append(
+            {
+                'from': datetime.datetime(YEAR,MONTH,DAY,row.start.hour,row.start.minute,row.start.second),
+                'to': datetime.datetime(YEAR,MONTH,DAY,row.end.hour,row.end.minute,row.end.second),
+                'i': row.intensity
+            }
+        )
+
+    return Response(data)
+
+
+@api_view(['PUT'])
+def changeASlotFromSchedule(request):
+    #expects schedule name , 'n'th slot to be changed, new_start, new_end
+    body = request.body.decode('utf-8')
+    body = json.loads(body)
+    
+    schedule = Schedule.objects.get(schedule_name = body['schedule_name'])
+
+    slots = Slot.objects.filter(schedule = schedule)
+    
+    n = body['n']
+    new_start = body['new_start']
+    new_end = body['new_end']
+
+    slot_to_change = slots[n-1]
+    slot_to_change.start = datetime.time(int(new_start),int((new_start%1)*100))
+    slot_to_change.end = datetime.time(int(new_end),int((new_end%1)*100))
+
+    slot_to_change.save()
+    return Response({'slots':slots})
