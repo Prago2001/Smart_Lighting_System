@@ -594,19 +594,47 @@ def alerts(request):
 @api_view(['GET'])
 def getAllSchedules(request):
     schedules = Schedule.objects.all()
-    return Response({'schedules':schedules})
+    data = {'schedules':[]}
+
+    for row in schedules:
+        data['schedules'].append(
+            {
+                'schedule_id': row.schedule_id,
+                'schedule_name': row.schedule_name,
+                'currently_active': row.currently_active
+            }
+        )
+
+    return Response(data)
     
-@api_view(['GET'])
-def getScheduleByName(request):
-    #expects schedule name in url
-    name = request.GET.get('schedule_name')
-    schedule = Schedule.objects.get(schedule_name = name)
-    return Response({'schedule':schedule})
 
 @api_view(['GET'])
 def getActiveSchedule(request):
     schedule = Schedule.objects.get(currently_active = True)
-    return Response({'active_schedule':schedule})
+    slots = Slot.objects.filter(schedule = schedule).order_by('id')
+
+    data = {
+        'schedule_id': schedule.schedule_id,
+        'schedule_name': schedule.schedule_name,
+        'currently_active': schedule.currently_active,
+        'slots':[]
+        }
+
+    YEAR = datetime.date.today().year
+    MONTH = datetime.date.today().month
+    DAY = datetime.date.today().day
+
+    for row in slots:
+        data['slots'].append(
+            {
+                'from': datetime.datetime(YEAR,MONTH,DAY,row.start.hour,row.start.minute,row.start.second),
+                'to': datetime.datetime(YEAR,MONTH,DAY,row.end.hour,row.end.minute,row.end.second),
+                'i': row.intensity
+            }
+        )
+
+    return Response(data)
+
 
 @api_view(['PUT'])
 def activateSchedule(request):
@@ -713,6 +741,51 @@ def createOrEditSchedule(request):
             #end = datetime.time(int(schedules_list[i][1]),int((schedules_list[i][1]%1)*100))
             slot = Slot(start = start,end = end,intensity = intensity,schedule = schedule_object)
             slot.save()
+        
+        if(make_active):
+            for job in scheduler.get_jobs():
+                if job.name == 'sync_to_schedule':
+                    job.remove()
+
+            active_slots = Slot.objects.filter(schedule = schedule_object).order_by('id')
+            
+            for slot in active_slots:
+            
+                if slot.start.strftime("%H:%M") == MASTER.SunSet:
+                    scheduler.add_job(
+                                sync_to_schedule,
+                                trigger='cron',
+                                id = "sync_sunset",
+                                hour = slot.start.hour,
+                                minute = slot.start.minute,
+                                timezone = 'Asia/Kolkata',
+                                replace_existing=True,
+                                name='sync_to_schedule'
+                    )
+                else:
+                    id = "sync_" + slot.__str__()            
+                    scheduler.add_job(
+                                sync_to_schedule,
+                                trigger='cron',
+                                id = id,
+                                hour = slot.start.hour,
+                                minute = slot.start.minute,
+                                timezone = 'Asia/Kolkata',
+                                replace_existing=True,
+                                name='sync_to_schedule'
+                            )
+                
+                if slot.end.strftime("%H:%M") == MASTER.SunRise:
+                    scheduler.add_job(
+                                sync_to_schedule,
+                                trigger='cron',
+                                id = "sync_sunrise",
+                                hour = slot.end.hour,
+                                minute = slot.end.minute,
+                                timezone = 'Asia/Kolkata',
+                                replace_existing=True,
+                                name='sync_to_schedule'
+                            )
             
 
         return Response(data={"message":"Success"})
@@ -722,11 +795,57 @@ def createOrEditSchedule(request):
         body = json.loads(body)
         schedule_name = body['schedule_ame']
         make_active = body['make_active']
+        no_of_slots = body['no_of_slots']
+        currently_active = body['currently_active']
 
         schedule_object = Schedule.objects.get(schedule_name = schedule_name)
         if(schedule_object.currently_active != make_active):
             schedule_object.currently_active = make_active
             schedule_object.save()
+            if(make_active):
+                for job in scheduler.get_jobs():
+                    if job.name == 'sync_to_schedule':
+                        job.remove()
+
+                active_slots = Slot.objects.filter(schedule = schedule_object).order_by('id')
+                
+                for slot in active_slots:
+                
+                    if slot.start.strftime("%H:%M") == MASTER.SunSet:
+                        scheduler.add_job(
+                                    sync_to_schedule,
+                                    trigger='cron',
+                                    id = "sync_sunset",
+                                    hour = slot.start.hour,
+                                    minute = slot.start.minute,
+                                    timezone = 'Asia/Kolkata',
+                                    replace_existing=True,
+                                    name='sync_to_schedule'
+                        )
+                    else:
+                        id = "sync_" + slot.__str__()            
+                        scheduler.add_job(
+                                    sync_to_schedule,
+                                    trigger='cron',
+                                    id = id,
+                                    hour = slot.start.hour,
+                                    minute = slot.start.minute,
+                                    timezone = 'Asia/Kolkata',
+                                    replace_existing=True,
+                                    name='sync_to_schedule'
+                                )
+                    
+                    if slot.end.strftime("%H:%M") == MASTER.SunRise:
+                        scheduler.add_job(
+                                    sync_to_schedule,
+                                    trigger='cron',
+                                    id = "sync_sunrise",
+                                    hour = slot.end.hour,
+                                    minute = slot.end.minute,
+                                    timezone = 'Asia/Kolkata',
+                                    replace_existing=True,
+                                    name='sync_to_schedule'
+                                )
 
         slots = Slot.objects.filter(schedule = schedule_object).order_by('id')
 
@@ -760,7 +879,12 @@ def getSlotsByScheduleName(request):
 
     slots = Slot.objects.filter(schedule = schedule).order_by('id')
 
-    data = {'slots':[]}
+    data = {
+        'schedule_id': schedule.schedule_id,
+        'schedule_name': schedule.schedule_name,
+        'currently_active': schedule.currently_active,
+        'slots':[]
+        }
 
     YEAR = datetime.date.today().year
     MONTH = datetime.date.today().month
@@ -778,23 +902,3 @@ def getSlotsByScheduleName(request):
     return Response(data)
 
 
-@api_view(['PUT'])
-def changeASlotFromSchedule(request):
-    #expects schedule name , 'n'th slot to be changed, new_start, new_end
-    body = request.body.decode('utf-8')
-    body = json.loads(body)
-    
-    schedule = Schedule.objects.get(schedule_name = body['schedule_name'])
-
-    slots = Slot.objects.filter(schedule = schedule)
-    
-    n = body['n']
-    new_start = body['new_start']
-    new_end = body['new_end']
-
-    slot_to_change = slots[n-1]
-    slot_to_change.start = datetime.time(int(new_start),int((new_start%1)*100))
-    slot_to_change.end = datetime.time(int(new_end),int((new_end%1)*100))
-
-    slot_to_change.save()
-    return Response({'slots':slots})

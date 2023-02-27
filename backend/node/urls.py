@@ -20,10 +20,8 @@ urlpatterns = [
     path('alerts/',views.alerts),
     path('createOrEditSchedule/',views.createOrEditSchedule),
     path('getAllSchedules/',views.getAllSchedules),
-    path('getScheduleByName/<str:schedule_name>/',views.getScheduleByName),
     path('getActiveSchedule/',views.getActiveSchedule),
     path('activateSchedule/',views.activateSchedule),
     path('deleteSchedule/<str:schedule_name>/',views.deleteSchedule),
     path('getSlotsBySchedule/<str:schedule_name>/',views.getSlotsByScheduleName),
-    path('changeSlot/',views.changeASlotFromSchedule),
 ]
