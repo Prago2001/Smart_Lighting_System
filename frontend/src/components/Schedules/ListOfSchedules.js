@@ -1,13 +1,26 @@
 import React, { useState,useEffect } from "react";
-import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import CreateNewSchedule from './CreateNewSchedule';
+import axios from "axios";
+import url from "../BaseURL";
+import ScheduleItem from "./ScheduleItem";
+
+
 
 function ListOfAllSchedules(){
 
     const [newSchedule,setNewSchedule] = useState(false);
+    const [listSchedules,setList] = useState([]);
+
+    useEffect(() => {
+        axios
+            .get(url + 'getAllSchedules/')
+            .then((res) => {
+                setList(res.data.schedules);
+            })
+
+    },[])
 
     const handleCreateScheduleClose = () => {
         setNewSchedule(false);
@@ -26,46 +39,31 @@ function ListOfAllSchedules(){
                     Create new schedule
                 </Button>
                 {newSchedule && 
-                <CreateNewSchedule 
-                    open={true} 
-                    onClose={handleCreateScheduleClose}/>
+                    <CreateNewSchedule 
+                        open={true} 
+                        onClose={handleCreateScheduleClose}
+                        setSchedules={setList}
+                    />
                 }
             </div>
             <Stack spacing={1}>
-                <ScheduleItem />
+                {
+                    listSchedules.map((schedule,index) => (
+                        
+                        <ScheduleItem 
+                            schedule={schedule} 
+                            id={index} 
+                            schedules={listSchedules}
+                            setSchedules={setList}
+                        />
+                        
+                    ))
+                }
             </Stack>
         </div>
     )
 }
 
-function ScheduleItem(){
-    return(
-        <div className='grid grid-flow-col grid-cols-10 gap-4 items-center  text-xl font-normal p-4  bg-gray-100 rounded-md'>
-            <div className='flex col-span-4 justify-start'>
-                Schedule Name
-            </div>
-            <div className='flex col-span-1 justify-center'>
-                Currently Active
-            </div>
-            <div className='flex col-span-5 justify-end'>
-                <ButtonGroup size='large' variant='outlined'>
-                    <Button
-                        
-                        color='primary'
-                    >
-                        VIEW/EDIT
-                    </Button>
-                    <Button
-                        
-                        color='error'
-                    >
-                        DELETE
-                    </Button>
-                </ButtonGroup>
-            </div>
-        </div>
-    )
 
-}
 
 export default ListOfAllSchedules;

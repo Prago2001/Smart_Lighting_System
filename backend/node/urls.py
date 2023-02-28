@@ -22,6 +22,6 @@ urlpatterns = [
     path('getAllSchedules/',views.getAllSchedules),
     path('getActiveSchedule/',views.getActiveSchedule),
     path('activateSchedule/',views.activateSchedule),
-    path('deleteSchedule/<str:schedule_name>/',views.deleteSchedule),
+    path('deleteSchedule/',views.deleteSchedule),
     path('getSlotsBySchedule/<str:schedule_name>/',views.getSlotsByScheduleName),
 ]
