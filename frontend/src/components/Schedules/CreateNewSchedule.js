@@ -16,6 +16,9 @@ import Typography from "@mui/material/Typography";
 import Slot from "./Slot";
 import axios from "axios";
 import url from "../BaseURL";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 
 export default function CreateNewSchedule(props) {
   const [open, setOpen] = useState(props.open);
@@ -90,7 +93,19 @@ export default function CreateNewSchedule(props) {
       }}
       maxWidth="xl"
     >
-      <DialogTitle>Create New Schedule</DialogTitle>
+      <DialogTitle sx={{fontSize:24}}>Create New Schedule
+        <IconButton
+            onClick={handleClose}
+            sx={{
+              position: "absolute",
+              right: 8,
+              top: 8,
+            }}
+          >
+            <CloseIcon fontSize="large" />
+          </IconButton>
+      </DialogTitle>
+      <Divider/>
       <form>
         <DialogContent>
           <TextField
@@ -109,10 +124,11 @@ export default function CreateNewSchedule(props) {
             size="large"
             sx={{
               my: 4,
+              fontSize:24,
             }}
           />
           <br />
-          <FormControl sx={{ my: 2 }}>
+          <FormControl sx={{ my: 2,fontSize:20 }}>
             <InputLabel htmlFor="slots-label">Slots</InputLabel>
             <Select
               value={slots}
@@ -130,23 +146,36 @@ export default function CreateNewSchedule(props) {
                 <Checkbox
                   checked={makeActive}
                   onChange={(e) => setMakeActive(e.target.checked)}
+                  sx={{'& .MuiSvgIcon-root': { fontSize: 32 } }}
                 />
               }
               label="Mark schedule as active? (System will follow this schedule)"
               sx={{
                 my: 3,
+                fontSize: 32
               }}
             />
           </FormControl>
           <DialogContentText
             sx={{
-              fontSize: 18,
+              fontSize: 20,
               color: "black",
               mb: 3,
             }}
           >
-            Sunrise Time: {new Date(sunrise).toLocaleTimeString()} <br />
-            Sunset Time: {new Date(sunset).toLocaleTimeString()}
+            <Typography variant="h6">
+              Sunrise Time:{" "}
+              <span className="font-bold">
+                {new Date(sunrise).toLocaleTimeString()}
+              </span>
+            </Typography>
+            <Typography variant="h6">
+              Sunset Time:{" "}
+              <span className="font-bold">
+                {new Date(sunset).toLocaleTimeString()}
+              </span>
+            </Typography>
+            
           </DialogContentText>
 
           {schedule.map((value, index) => (

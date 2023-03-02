@@ -9,11 +9,26 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Dialog from '@mui/material/Dialog';
+import ViewEditSchedule from "./ViewEditSchedule";
 
 
 
 function ScheduleItem({schedule,index,schedules,setSchedules}){
     const [deleteAlert,setDeleteAlert] = useState(false);
+    const [editSchedule,setEditSchedule] = useState(false);
+
+    const updateScheduleList = () => {
+        axios
+            .get(url + 'getAllSchedules/')
+            .then((res) => {
+                setSchedules(res.data.schedules);
+                // console.log('updateScheduleList');
+            })
+    };
+
+    const handleEditScheduleClose = () => {
+        setEditSchedule(false);
+    };
 
     const handleDelete = () => {
         axios.
@@ -45,9 +60,20 @@ function ScheduleItem({schedule,index,schedules,setSchedules}){
                 
             </div>
             <div className='flex col-span-3 justify-around'>
-                <Button variant="contained">
+                <Button 
+                    variant="contained"
+                    onClick={() => setEditSchedule(true)}
+                >
                     VIEW/EDIT
                 </Button>
+                {
+                    editSchedule && 
+                    <ViewEditSchedule 
+                        closeEditSchedule={handleEditScheduleClose}
+                        name={schedule.schedule_name}
+                        updateScheduleList={updateScheduleList}
+                    />
+                }
             </div>
             <div className='flex col-span-2 justify-around'>
                 <Button 

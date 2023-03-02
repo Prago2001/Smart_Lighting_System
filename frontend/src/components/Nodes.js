@@ -99,12 +99,11 @@ const Nodes = () => {
         console.log(nodes);
       });
     }
-    // else if(newValue == 2){
-    //   axios.get(url + "logs/").then((res) => {
-    //     setLogs(res.data.logs);
-    //     console.log(res.data.logs);
-    //   })
-    // }
+    else if(newValue == 0){
+      axios.get(url + "getActiveSchedule/").then((res) => {
+        setAutoSchedule(res.data.slots);
+      })
+    }
   };
 
   const marks = [
