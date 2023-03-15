@@ -34,7 +34,10 @@ const NodeItem = ({ item, ticked }) => {
           </Link>
         </Grid>
         <Grid item xs={2} className="flex items-center justify-center">
-          <div className="flex justify-end">
+          <div className="flex justify-end items-baseline">
+            <Typography className="text-red-800">
+              OFF
+            </Typography>
             <Switch
               checked={item.relay}
               disabled={global.isGlobal}
@@ -60,6 +63,9 @@ const NodeItem = ({ item, ticked }) => {
               }}
               inputProps={{ "aria-label": "controlled" }}
             />
+            <Typography className="text-green-800">
+              ON
+            </Typography>
           </div>
         </Grid>
         <Grid item xs={2} className="flex items-center justify-center">

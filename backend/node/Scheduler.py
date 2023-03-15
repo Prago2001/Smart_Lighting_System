@@ -7,6 +7,8 @@ from datetime import timedelta
 from .Coordinator import get_curr_temp_val_async,retry_dim,retry_mains
 import concurrent.futures
 from django.utils.timezone import get_current_timezone
+from apscheduler.job import Job
+
 try:
     from .Coordinator import MASTER
 except Exception as e:
@@ -56,66 +58,73 @@ def fetchSunModel() :
 # Coordinator().autoSchedule[0]['from'] = s["sunset"]
 # Coordinator().autoSchedule[-1]['to'] = s["sunrise"]
 
-    current_schedule = Schedule.objects.get(currently_active = True)
-    slots=Slot.objects.filter(schedule=current_schedule).order_by('id')
-    count = 0
-    for slot in slots:
-        if count == 0:
-            slot.start = datetime.time(s["sunset"].hour,s["sunset"].minute,s["sunset"].second)
-            slot.save()
-        elif count == len(slots) - 1:
-            slot.end = datetime.time(s["sunrise"].hour,s["sunrise"].minute,s["sunrise"].second)
-            slot.save()
-        count += 1
+    # current_schedule = Schedule.objects.get(currently_active = True)
+    for current_schedule in Schedule.objects.all():
+        slots=Slot.objects.filter(schedule=current_schedule).order_by('id')
+        count = 0
+        for slot in slots:
+            if count == 0:
+                slot.start = datetime.time(s["sunset"].hour,s["sunset"].minute,s["sunset"].second)
+                slot.save()
+            elif count == len(slots) - 1:
+                slot.end = datetime.time(s["sunrise"].hour,s["sunrise"].minute,s["sunrise"].second)
+                slot.save()
+            count += 1
 
     # Changing scheduled job at sunrise
-    # scheduler.add_job(
-    #                     sync_to_schedule,
-    #                     trigger='cron',
-    #                     id = "sync_sunrise",
-    #                     hour = s["sunrise"].hour,
-    #                     minute = s["sunrise"].minute,
-    #                     timezone = 'Asia/Kolkata',
-    #                     replace_existing=True,
-    #                     name='sync_to_schedule'
-    # )
-    # # Changing scheduled job at sunset
-    # scheduler.add_job(
-    #                     sync_to_schedule,
-    #                     trigger='cron',
-    #                     id = "sync_sunset",
-    #                     hour = s["sunset"].hour,
-    #                     minute = s["sunset"].minute,
-    #                     timezone = 'Asia/Kolkata',
-    #                     replace_existing=True,
-    #                     name='sync_to_schedule'
-    # )
+    scheduler.add_job(
+                        sync_to_schedule,
+                        trigger='cron',
+                        id = "sync_sunrise",
+                        hour = s["sunrise"].hour,
+                        minute = s["sunrise"].minute,
+                        timezone = 'Asia/Kolkata',
+                        replace_existing=True,
+                        name='sync_to_schedule'
+    )
+    # Changing scheduled job at sunset
+    scheduler.add_job(
+                        sync_to_schedule,
+                        trigger='cron',
+                        id = "sync_sunset",
+                        hour = s["sunset"].hour,
+                        minute = s["sunset"].minute,
+                        timezone = 'Asia/Kolkata',
+                        replace_existing=True,
+                        name='sync_to_schedule'
+    )
 
 
 
 
 def updater_start():
 
-    # scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values')
+    scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values')
     scheduler.add_job(fetchSunModel, 'cron', id='sunmodel', hour=0, minute=15, timezone='Asia/Kolkata',name='sunrise_sunset_values')
-    # scheduler.add_job(
-    #     sync_to_schedule,
-    #     trigger='interval',
-    #     minutes=30,
-    #     id='sync_to_auto',
-    #     name='sync_every_half_hour',
-    #     timezone='Asia/Kolkata'
-    # )
-    # add_sync_jobs()
     scheduler.add_job(
-        delete_logs,
+        sync_to_schedule,
         trigger='interval',
-        id='delete_logs',
-        name="Delete logs after every 48 hours",
-        days=2,
-        next_run_time=datetime.datetime.combine(datetime.date.today() + timedelta(days=1),datetime.time(hour=1),tzinfo=get_current_timezone()),
+        minutes=30,
+        id='sync_to_auto',
+        name='sync_every_half_hour',
         timezone='Asia/Kolkata'
     )
+    try:
+        scheduler.add_job(
+            delete_logs,
+            trigger='interval',
+            id='delete_logs',
+            name="Delete logs after every 48 hours",
+            days=2,
+            next_run_time=datetime.datetime.combine(datetime.date.today() + timedelta(days=1),datetime.time(hour=1),tzinfo=get_current_timezone()),
+            timezone='Asia/Kolkata'
+        )
+    except Exception as e:
+        print("Delete logs",str(e))
+    try:
+        add_sync_jobs()
+    except Exception as e:
+        print("add sync jobs",e)
     scheduler.start()
     for job in scheduler.get_jobs():
         print("name: %s, id: %s, trigger: %s, next run: %s, handler: %s" % (job.name,job.id, job.trigger, job.next_run_time, job.func))
@@ -292,6 +301,13 @@ def sync_to_schedule():
 
 
 def add_sync_jobs():
+    # Remove Previous jobs
+    try:
+        for job in scheduler.get_jobs():
+            if job.name == 'sync_to_schedule':
+                job.remove()
+    except Exception as e:
+        print("In add sync jobs: ",str(e))
     current_active_schedule = Schedule.objects.get(currently_active=True)
     slots = Slot.objects.filter(schedule=current_active_schedule).order_by('id')
     for slot in slots:
@@ -308,7 +324,7 @@ def add_sync_jobs():
                         name='sync_to_schedule'
             )
         else:
-            id = "sync_" + slot.__str__()            
+            id = "sync_" + slot.__str__()        
             scheduler.add_job(
                         sync_to_schedule,
                         trigger='cron',
@@ -319,7 +335,7 @@ def add_sync_jobs():
                         replace_existing=True,
                         name='sync_to_schedule'
                     )
-        
+    
         if slot.end.strftime("%H:%M") == MASTER.SunRise:
             scheduler.add_job(
                         sync_to_schedule,
@@ -331,6 +347,13 @@ def add_sync_jobs():
                         replace_existing=True,
                         name='sync_to_schedule'
                     )
+    
+    job:Job
+    try:
+        for job in scheduler.get_jobs():
+            print("name: %s, id: %s, trigger: %s, next run: %s, handler: %s" % (job.name,job.id, job.trigger, job.next_run_time, job.func))
+    except Exception as e:
+        print('Error in add_sync_jobs - for loop')
     
 def delete_logs():
     threshold = datetime.datetime.now(tz=get_current_timezone()) - timedelta(days=2)

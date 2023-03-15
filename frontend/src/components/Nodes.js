@@ -540,9 +540,9 @@ const Nodes = () => {
               variant="contained"
               sx = {{
                 color:'black',
-                backgroundColor:'#FFFF00',
+                backgroundColor:'#ffcc00',
                 ':hover' : {
-                  backgroundColor: darken('#FFFF00', 0.1),
+                  backgroundColor: darken('#ffcc00', 0.1),
                 }
               }}
               disabled={syncloading || !scheduleStatus}
@@ -744,7 +744,7 @@ const Nodes = () => {
                   
                 }}
                 color={global.globalStatus ? "success" : "error"}
-                variant={global.globalStatus ? "contained" : "outlined"}
+                variant="contained"
               >
                 Switch All {global.globalStatus ? "Off" : "On"}
                 {loadingOnOff && (

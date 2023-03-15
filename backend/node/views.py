@@ -1,7 +1,7 @@
 import json
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .Scheduler import fetchSunModel, scheduler, function_mapping, sync_to_schedule
+from .Scheduler import fetchSunModel, scheduler, function_mapping, sync_to_schedule, add_sync_jobs
 import pytz
 from dateutil import parser
 from datetime import timedelta
@@ -295,55 +295,8 @@ def changeSchedule(request):
         db_slot.end = new_end
         db_slot.intensity = new_intensity
         db_slot.save()
-        # # scheduler.add_job(
-        # #             function_mapping['set_dim_to'],
-        # #             args=[db_slot.intensity],
-        # #             trigger='cron',
-        # #             id = db_slot.__str__(),
-        # #             hour = db_slot.start.hour,
-        # #             minute = db_slot.start.minute,
-        # #             timezone = 'Asia/Kolkata',
-        # #             replace_existing=True,
-        # #             name='dimming_job'
-        # #         )
-        # if db_slot.start.strftime("%H:%M") == MASTER.SunSet:
-        #     scheduler.add_job(
-        #                 sync_to_schedule,
-        #                 trigger='cron',
-        #                 id = "sync_sunset",
-        #                 hour = db_slot.start.hour,
-        #                 minute = db_slot.start.minute,
-        #                 timezone = 'Asia/Kolkata',
-        #                 replace_existing=True,
-        #                 name='sync_to_schedule'
-        #     )
-        # else:
-        #     id = "sync_" + db_slot.__str__()
-        #     scheduler.add_job(
-        #                 sync_to_schedule,
-        #                 trigger='cron',
-        #                 id = id,
-        #                 hour = db_slot.start.hour,
-        #                 minute = db_slot.start.minute,
-        #                 timezone = 'Asia/Kolkata',
-        #                 replace_existing=True,
-        #                 name='sync_to_schedule'
-        #             )
-        
-        # if db_slot.end.strftime("%H:%M") == MASTER.SunRise:
-        #     scheduler.add_job(
-        #                 sync_to_schedule,
-        #                 trigger='cron',
-        #                 id = "sync_sunrise",
-        #                 hour = db_slot.end.hour,
-        #                 minute = db_slot.end.minute,
-        #                 timezone = 'Asia/Kolkata',
-        #                 replace_existing=True,
-        #                 name='sync_to_schedule'
-        #             )
-        row += 1
-    for job in scheduler.get_jobs():
-        print("name: %s, id: %s, trigger: %s, next run: %s, handler: %s" % (job.name,job.id, job.trigger, job.next_run_time, job.func))
+    # Add sync jobs
+    add_sync_jobs()
     return Response({"message" : "Success"})
 
 
@@ -652,50 +605,8 @@ def activateSchedule(request):
     activation_schedule.currently_active = True
     activation_schedule.save()
 
-
-    # for job in scheduler.get_jobs():
-    #     if job.name == 'sync_to_schedule':
-    #         job.remove()
-
-    # active_slots = Slot.objects.filter(schedule = activation_schedule).order_by('id')
-    
-    # for slot in active_slots:
-    
-    #     if slot.start.strftime("%H:%M") == MASTER.SunSet:
-    #         scheduler.add_job(
-    #                     sync_to_schedule,
-    #                     trigger='cron',
-    #                     id = "sync_sunset",
-    #                     hour = slot.start.hour,
-    #                     minute = slot.start.minute,
-    #                     timezone = 'Asia/Kolkata',
-    #                     replace_existing=True,
-    #                     name='sync_to_schedule'
-    #         )
-    #     else:
-    #         id = "sync_" + slot.__str__()            
-    #         scheduler.add_job(
-    #                     sync_to_schedule,
-    #                     trigger='cron',
-    #                     id = id,
-    #                     hour = slot.start.hour,
-    #                     minute = slot.start.minute,
-    #                     timezone = 'Asia/Kolkata',
-    #                     replace_existing=True,
-    #                     name='sync_to_schedule'
-    #                 )
-        
-    #     if slot.end.strftime("%H:%M") == MASTER.SunRise:
-    #         scheduler.add_job(
-    #                     sync_to_schedule,
-    #                     trigger='cron',
-    #                     id = "sync_sunrise",
-    #                     hour = slot.end.hour,
-    #                     minute = slot.end.minute,
-    #                     timezone = 'Asia/Kolkata',
-    #                     replace_existing=True,
-    #                     name='sync_to_schedule'
-    #                 )
+    # Add sync jobs
+    add_sync_jobs()
 
 
     return Response(data={"message":"Success"})
@@ -762,50 +673,8 @@ def createOrEditSchedule(request):
             slot = Slot(start = start,end = end,intensity = intensity,schedule = schedule_object)
             slot.save()
         
-        # if make_active is True:
-        #     for job in scheduler.get_jobs():
-        #         if job.name == 'sync_to_schedule':
-        #             job.remove()
-
-        #     active_slots = Slot.objects.filter(schedule = schedule_object).order_by('id')
-            
-        #     for slot in active_slots:
-            
-        #         if slot.start.strftime("%H:%M") == MASTER.SunSet:
-        #             scheduler.add_job(
-        #                         sync_to_schedule,
-        #                         trigger='cron',
-        #                         id = "sync_sunset",
-        #                         hour = slot.start.hour,
-        #                         minute = slot.start.minute,
-        #                         timezone = 'Asia/Kolkata',
-        #                         replace_existing=True,
-        #                         name='sync_to_schedule'
-        #             )
-        #         else:
-        #             id = "sync_" + slot.__str__()            
-        #             scheduler.add_job(
-        #                         sync_to_schedule,
-        #                         trigger='cron',
-        #                         id = id,
-        #                         hour = slot.start.hour,
-        #                         minute = slot.start.minute,
-        #                         timezone = 'Asia/Kolkata',
-        #                         replace_existing=True,
-        #                         name='sync_to_schedule'
-        #                     )
-                
-        #         if slot.end.strftime("%H:%M") == MASTER.SunRise:
-        #             scheduler.add_job(
-        #                         sync_to_schedule,
-        #                         trigger='cron',
-        #                         id = "sync_sunrise",
-        #                         hour = slot.end.hour,
-        #                         minute = slot.end.minute,
-        #                         timezone = 'Asia/Kolkata',
-        #                         replace_existing=True,
-        #                         name='sync_to_schedule'
-        #                     )
+        if make_active is True:
+            add_sync_jobs()
             
 
         return Response(data={"message":"Success"})

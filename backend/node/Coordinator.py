@@ -132,9 +132,9 @@ class Singleton(type):
 
 class Coordinator(metaclass=Singleton):
     def __init__(self):
-        # self.master = ZigBeeDevice("/dev/ttyUSB0",9600)
-        # self.master.open()
-        # self.network = self.master.get_network()
+        self.master = ZigBeeDevice("/dev/ttyUSB0",9600)
+        self.master.open()
+        self.network = self.master.get_network()
         self.SunRise = None
         self.SunSet = None
         self.Telemetry = True
