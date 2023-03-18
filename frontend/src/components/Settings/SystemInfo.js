@@ -10,7 +10,7 @@ export default function SystemInfo(){
                 System Information
             </Typography>
             <Typography variant="overline">
-                Version Number: 3.4
+                Version Number: 4.0
             </Typography>
         </div>
     )
