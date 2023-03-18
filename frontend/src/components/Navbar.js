@@ -18,15 +18,19 @@ function Navbar({ fixed }) {
   const [data, setData] = useState([]);
   
   useEffect(() => {
-    axios.get(url + "alerts/").then((res) => {
+    axios.get(url + "alerts/")
+      .then((res) => {
       setData(res.data.alerts);
       console.log(res.data.alerts);
-    })
+      })
+      .catch((error) => console.log(error));
+
     const interval = setInterval(() => {
       axios.get(url + "alerts/").then((res) => {
         setData(res.data.alerts);
         console.log(res.data.alerts);
       })
+      .catch((error) => console.log(error));
     },300000);
     return () => clearInterval(interval);
 
@@ -90,15 +94,7 @@ function Navbar({ fixed }) {
                   className="px-3 py-2 flex items-center text-sm uppercase font-bold leading-snug text-white hover:opacity-75"
                   href="#pablo"
                 >
-                  Area Name |
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link
-                  className="px-3 py-2 flex items-center text-sm uppercase font-bold leading-snug text-white hover:opacity-75"
-                  href="#pablo"
-                >
-                  LOGOUT
+                  {JSON.parse(localStorage.getItem("area_name"))}
                 </Link>
               </li>
             </ul>

@@ -144,6 +144,9 @@ class Coordinator(metaclass=Singleton):
         self.failed_nodes = []
         self.sunrise_timestamp = None
         self.sunset_timestamp = None
+        self.areaName = ""
+        self.syncWithAuto = True
+        self.syncWithAutoInterval = 30
 
     def discover_nodes(self) -> List[Remote]:
         self.nodes : List[Remote] = []

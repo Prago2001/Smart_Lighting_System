@@ -13,6 +13,7 @@ from .Coordinator import perform_dimming,perform_toggle,retry_mains, retry_dim
 from apscheduler.job import Job
 from django.utils.timezone import get_current_timezone
 import random
+from .utils import read_config_file,write_config_file
 try:
     from .Coordinator import MASTER
 except Exception as e:
@@ -443,6 +444,7 @@ def enable_disable_telemetry(request):
         print("JOB LIST : ")
         for job in scheduler.get_jobs():
             print("name: %s, trigger: %s, next run: %s, handler: %s" % (job.name, job.trigger, job.next_run_time, job.func))
+        write_config_file()
         return Response(data={"message":"Success"})
 
 
@@ -464,13 +466,15 @@ def enable_disable_schedule(request):
             MASTER.Schedule = True
             job:Job
             for job in scheduler.get_jobs():
-                if job.name in ('dimming_job','sync_to_schedule','sync_every_half_hour'):
+                if job.name in ('dimming_job','sync_to_schedule'):
+                    job.resume()
+                if job.name == 'sync_every_half_hour' and MASTER.syncWithAuto is True:
                     job.resume()
         
         print("JOB LIST : ")
         for job in scheduler.get_jobs():
             print("name: %s, trigger: %s, next run: %s, handler: %s" % (job.name, job.trigger, job.next_run_time, job.func))
-        
+        write_config_file()
         return Response(data={"message":"Success"})
 
 @api_view(['PUT'])
@@ -607,6 +611,12 @@ def activateSchedule(request):
 
     # Add sync jobs
     add_sync_jobs()
+    if MASTER.Schedule is False:
+        job:Job
+        for job in scheduler.get_jobs():
+            if job.name in ('dimming_job','sync_to_schedule','sync_every_half_hour'):
+                job.pause()
+
 
 
     return Response(data={"message":"Success"})
@@ -740,3 +750,54 @@ def getScheduleInfo(request):
     return Response(data=data)
 
 
+@api_view(["GET","PUT"])
+def areaName(request):
+    if request.method == "GET":
+        return Response(data={'area_name': MASTER.areaName})
+    elif request.method == "PUT":
+        body = request.body.decode('utf-8')
+        body = json.loads(body)
+        area_name = body['area_name']
+
+        MASTER.areaName = area_name
+        write_config_file()
+        return Response(data={"message":"Success"})
+
+@api_view(["GET","PUT"])
+def sync_with_auto_interval(request):
+    if request.method == "GET":
+        return Response(data={'status':MASTER.syncWithAuto,'interval':MASTER.syncWithAutoInterval})
+    elif request.method == "PUT":
+        body = request.body.decode('utf-8')
+        body = json.loads(body)
+        if 'status' in body:
+            status = body['status']
+            if status is True:
+                job:Job
+                for job in scheduler.get_jobs():
+                    if job.name in ('sync_every_half_hour'):
+                        job.resume()
+                MASTER.syncWithAuto = True
+            else:
+                job:Job
+                for job in scheduler.get_jobs():
+                    if job.name in ('sync_every_half_hour'):
+                        job.pause()
+                MASTER.syncWithAuto = False
+        elif 'interval' in body:
+            interval = body['interval']
+            MASTER.syncWithAutoInterval = interval
+            scheduler.add_job(
+                sync_to_schedule,
+                trigger='interval',
+                minutes=MASTER.syncWithAutoInterval,
+                id='sync_to_auto',
+                name='sync_every_half_hour',
+                timezone='Asia/Kolkata',
+                replace_existing=True
+            )
+        print("JOB LIST : ")
+        for job in scheduler.get_jobs():
+            print("name: %s, trigger: %s, next run: %s, handler: %s" % (job.name, job.trigger, job.next_run_time, job.func))
+        write_config_file()
+        return Response({'message':'Success'})

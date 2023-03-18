@@ -24,4 +24,6 @@ urlpatterns = [
     path('changeActiveSchedule/',views.activateSchedule),
     path('deleteSchedule/',views.deleteSchedule),
     path('getScheduleInfo/',views.getScheduleInfo),
+    path('areaName/',views.areaName),
+    path('syncWithAutoInterval',views.sync_with_auto_interval),
 ]

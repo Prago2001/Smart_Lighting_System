@@ -72,44 +72,35 @@ def fetchSunModel() :
             count += 1
 
     # Changing scheduled job at sunrise
-    scheduler.add_job(
-                        sync_to_schedule,
-                        trigger='cron',
-                        id = "sync_sunrise",
-                        hour = s["sunrise"].hour,
-                        minute = s["sunrise"].minute,
-                        timezone = 'Asia/Kolkata',
-                        replace_existing=True,
-                        name='sync_to_schedule'
-    )
-    # Changing scheduled job at sunset
-    scheduler.add_job(
-                        sync_to_schedule,
-                        trigger='cron',
-                        id = "sync_sunset",
-                        hour = s["sunset"].hour,
-                        minute = s["sunset"].minute,
-                        timezone = 'Asia/Kolkata',
-                        replace_existing=True,
-                        name='sync_to_schedule'
-    )
+    if MASTER.Schedule is True:
+        scheduler.add_job(
+                            sync_to_schedule,
+                            trigger='cron',
+                            id = "sync_sunrise",
+                            hour = s["sunrise"].hour,
+                            minute = s["sunrise"].minute,
+                            timezone = 'Asia/Kolkata',
+                            replace_existing=True,
+                            name='sync_to_schedule'
+        )
+        # Changing scheduled job at sunset
+        scheduler.add_job(
+                            sync_to_schedule,
+                            trigger='cron',
+                            id = "sync_sunset",
+                            hour = s["sunset"].hour,
+                            minute = s["sunset"].minute,
+                            timezone = 'Asia/Kolkata',
+                            replace_existing=True,
+                            name='sync_to_schedule'
+        )
 
 
 
 
 def updater_start():
-
-    scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values')
-    scheduler.add_job(fetchSunModel, 'cron', id='sunmodel', hour=0, minute=15, timezone='Asia/Kolkata',name='sunrise_sunset_values')
-    scheduler.add_job(
-        sync_to_schedule,
-        trigger='interval',
-        minutes=30,
-        id='sync_to_auto',
-        name='sync_every_half_hour',
-        timezone='Asia/Kolkata'
-    )
     try:
+        scheduler.add_job(fetchSunModel, 'cron', id='sunmodel', hour=0, minute=15, timezone='Asia/Kolkata',name='sunrise_sunset_values')
         scheduler.add_job(
             delete_logs,
             trigger='interval',
@@ -119,15 +110,40 @@ def updater_start():
             next_run_time=datetime.datetime.combine(datetime.date.today() + timedelta(days=1),datetime.time(hour=1),tzinfo=get_current_timezone()),
             timezone='Asia/Kolkata'
         )
-    except Exception as e:
-        print("Delete logs",str(e))
-    try:
+        if MASTER.Telemetry is True:
+            scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values')
+        else:
+            scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values',next_run_time=None)
         add_sync_jobs()
+        if MASTER.syncWithAuto is True:
+            scheduler.add_job(
+                sync_to_schedule,
+                trigger='interval',
+                minutes=MASTER.syncWithAutoInterval,
+                id='sync_to_auto',
+                name='sync_every_half_hour',
+                timezone='Asia/Kolkata'
+            )
+        else:
+            scheduler.add_job(
+                sync_to_schedule,
+                trigger='interval',
+                minutes=MASTER.syncWithAutoInterval,
+                id='sync_to_auto',
+                name='sync_every_half_hour',
+                timezone='Asia/Kolkata',
+                next_run_time=None
+            )
+        scheduler.start()
+        if MASTER.Schedule is False:
+            job:Job
+            for job in scheduler.get_jobs():
+                if job.name in ('dimming_job','sync_to_schedule','sync_every_half_hour'):
+                    job.pause()
+        for job in scheduler.get_jobs():
+            print("name: %s, id: %s, trigger: %s, next run: %s, handler: %s" % (job.name,job.id, job.trigger, job.next_run_time, job.func))
     except Exception as e:
-        print("add sync jobs",e)
-    scheduler.start()
-    for job in scheduler.get_jobs():
-        print("name: %s, id: %s, trigger: %s, next run: %s, handler: %s" % (job.name,job.id, job.trigger, job.next_run_time, job.func))
+        print("Error in updater_start: ",e)
 
 
 
@@ -356,5 +372,10 @@ def add_sync_jobs():
         print('Error in add_sync_jobs - for loop')
     
 def delete_logs():
-    threshold = datetime.datetime.now(tz=get_current_timezone()) - timedelta(days=2)
-    Notification.objects.filter(timestamp__lt=threshold).delete()
+    try:
+        threshold = datetime.datetime.now(tz=get_current_timezone()) - timedelta(days=2)
+        Notification.objects.filter(timestamp__lt=threshold).delete()
+        TemperatureMeasurement.objects.filter(timestamp__lt=threshold).delete()
+        CurrentMeasurement.objects.filter(timestamp__lt=threshold).delete()
+    except Exception as e:
+        print("Error in deleting logs")

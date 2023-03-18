@@ -26,7 +26,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import Stack from '@mui/material/Stack';
 import DisplayLogs from "./Logs/DisplayLogs";
 import ListOfAllSchedules from "./Schedules/ListOfSchedules";
-
+import DisplaySettings from "./Settings/DisplaySettings";
 
 
 const Nodes = () => {
@@ -187,12 +187,13 @@ const Nodes = () => {
   
 
   useEffect(() => {
-    axios
-      .get(url + "setTelemetry/",)
-      .then((res) => {
-        console.log("useEffect of setTelemetry");
-        setTelemetryStatus(res.data.status);
-      })
+    // axios
+    //   .get(url + "setTelemetry/",)
+    //   .then((res) => {
+    //     console.log("useEffect of setTelemetry");
+    //     setTelemetryStatus(res.data.status);
+    //   })
+    //   .catch((error) => console.log(error));
     if (global.isGlobal === true) {
       axios
         .get(url + "toggle/", 
@@ -208,7 +209,8 @@ const Nodes = () => {
           // setGlobalToggle(global.globalStatus);
           setGlobalToggle(res.data.relay);
           console.log(nodes);
-        });
+        })
+        .catch((error) => console.log(error));
       axios
         .get(url + "dimming/", 
         // {
@@ -220,7 +222,8 @@ const Nodes = () => {
           // set current value
           setGlobalDim(res.data.intensity);
           console.log(nodes);
-        });
+        })
+        .catch((error) => console.log(error));
 
     }
   }, [global.isGlobal]);
@@ -229,14 +232,21 @@ const Nodes = () => {
       setNodes(res.data.nodes);
       console.log(res.data.nodes);
       console.log(nodes);
-    });
+    })
+    .catch((error) => console.log(error));
   }, []);
 
   useEffect(() => {
-    axios.get(url + "activateSchedule/")
-    .then((res) => {
-      setScheduleStatus(res.data.status);
-    })
+    // axios.get(url + "activateSchedule/")
+    // .then((res) => {
+    //   setScheduleStatus(res.data.status);
+    // })
+    // .catch((error) => console.log(error));
+    axios
+      .get(url + "areaName/")
+      .then((res) => {
+        localStorage.setItem('area_name',JSON.stringify(res.data.area_name));
+      })
 
     axios.get(url + "getSchedule/").then((res) => {
       console.log(res);
@@ -244,7 +254,8 @@ const Nodes = () => {
       setAutoSchedule(res.data.schedule);
       localStorage.setItem('sunrise',JSON.stringify(res.data.sunrise_ts));
       localStorage.setItem('sunset',JSON.stringify(res.data.sunset_ts));
-    });
+    })
+    .catch((error) => console.log(error));
   }, []);
 
   const handleButtonClick = () => {
@@ -324,7 +335,7 @@ const Nodes = () => {
       </Dialog>
       <div className="flex grid grid-flow-row grid-rows-2 items-center m-2 mx-10">
         <div className="flex col-span-4 items-center justify-start text-2xl text-primary font-bold bg-gray-200 p-3 rounded-md">
-          Area Name
+          {JSON.parse(localStorage.getItem("area_name"))}
         </div>
         <div className="flex col-span-4 justify-start text-2xl text-primary font-bold">
           {
@@ -406,6 +417,7 @@ const Nodes = () => {
             <Tab label="MANUAL" {...a11yProps(1)} />
             <Tab label="SCHEDULES" {...a11yProps(2)} />
             <Tab label="LOGS" {...a11yProps(3)}/>
+            <Tab label="SETTINGS" {...a11yProps(4)}/>
           </Tabs>
         </Box>
         <TabPanel value={tab} index={0}>
@@ -460,7 +472,7 @@ const Nodes = () => {
             ))}
           </div>
           <div className="flex grid grid-flow-row grid-cols-9 gap-4 grid-rows-1 p-4 bg-blue-200 bg-opacity-25 rounded-md">
-          <Button
+          {/* <Button
               className="col-start-4 col-span-2"
               variant="contained"
               // sx={buttonSx}
@@ -533,7 +545,7 @@ const Nodes = () => {
                   YES
                 </Button>
               </DialogActions>
-            </Dialog>
+            </Dialog> */}
             <Button
               className="col-start-6 col-span-2"
               // color="warning"
@@ -763,7 +775,7 @@ const Nodes = () => {
               </Button>
             </div>
 
-            <div className="flex  col-span-2 items-centers justify-end">
+            {/* <div className="flex  col-span-2 items-centers justify-end">
               <Button
                 size='small'
                 disabled={loadingTelemetry}
@@ -805,7 +817,7 @@ const Nodes = () => {
                   />
                 )}
               </Button>
-            </div>
+            </div> */}
           </div>
           <Stack spacing={2}>
             {
@@ -827,6 +839,9 @@ const Nodes = () => {
         </TabPanel>
         <TabPanel value={tab} index={3}>
           <DisplayLogs/>
+        </TabPanel>
+        <TabPanel value={tab} index={4}>
+          <DisplaySettings/>
         </TabPanel>
       </Box>
       {/* <Box sx={{ width: "30%" }}>
