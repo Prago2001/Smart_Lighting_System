@@ -1,7 +1,0 @@
-{
-    "area_name": "Development",
-    "schedule": true,
-    "sync_with_auto": true,
-    "sync_with_auto_interval": 60,
-    "telemetry": true
-}
