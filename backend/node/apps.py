@@ -80,7 +80,7 @@ class NodeConfig(AppConfig):
             fetchSunModel()
             updater_start()
             if MASTER.Schedule is True:
-                sync_to_schedule()
+                sync_to_schedule(syncWithAutoInterval=True)
             
             # add_dim_jobs_on_startup()
             # add_sync_jobs()

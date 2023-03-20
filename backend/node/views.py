@@ -284,18 +284,17 @@ def changeSchedule(request):
 
     current_active_schedule = Schedule.objects.get(currently_active=True)
     slots = Slot.objects.filter(schedule=current_active_schedule).order_by('id')
-    row = 0
-    for db_slot in slots:
-        new_row = schedule[row]
+    for i in range(len(slots)):
+        row = schedule[i]
+        start = parser.isoparse(row['from']).astimezone(pytz.timezone('Asia/Kolkata'))
+        end = parser.isoparse(row['to']).astimezone(pytz.timezone('Asia/Kolkata'))
+        intensity = int(row['i'])
 
-        new_start = parser.isoparse(new_row['from']).astimezone(pytz.timezone('Asia/Kolkata'))
-        new_end = parser.isoparse(new_row['to']).astimezone(pytz.timezone('Asia/Kolkata'))
-        new_intensity = new_row['i']
-
-        db_slot.start = new_start
-        db_slot.end = new_end
-        db_slot.intensity = new_intensity
-        db_slot.save()
+        slots[i].start = start
+        slots[i].end = end
+        slots[i].intensity = intensity
+        
+        slots[i].save()
     # Add sync jobs
     add_sync_jobs()
     return Response({"message" : "Success"})
@@ -713,6 +712,8 @@ def createOrEditSchedule(request):
             
             slots[i].save()
 
+        if schedule_object.currently_active is True:
+            add_sync_jobs()
             
 
         return Response(data={"message":"Success"})
@@ -789,6 +790,7 @@ def sync_with_auto_interval(request):
             MASTER.syncWithAutoInterval = interval
             scheduler.add_job(
                 sync_to_schedule,
+                kwargs={'syncWithAutoInterval' : True},
                 trigger='interval',
                 minutes=MASTER.syncWithAutoInterval,
                 id='sync_to_auto',

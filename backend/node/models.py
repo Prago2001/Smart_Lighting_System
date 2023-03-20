@@ -73,6 +73,7 @@ class Notification(models.Model):
         ('dim','Perform dimming'),
         ('current',"Alert on current value"),
         ('temperature',"Alert on temperature value"),
+        ('information',"Misc like sync with auto interval")
     ]
     operation_type = models.CharField(
         max_length=16,

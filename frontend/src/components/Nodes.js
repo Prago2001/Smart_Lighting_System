@@ -27,6 +27,7 @@ import Stack from '@mui/material/Stack';
 import DisplayLogs from "./Logs/DisplayLogs";
 import ListOfAllSchedules from "./Schedules/ListOfSchedules";
 import DisplaySettings from "./Settings/DisplaySettings";
+import Slot from "./Schedules/Slot";
 
 
 const Nodes = () => {
@@ -448,8 +449,26 @@ const Nodes = () => {
                 {sun.sunset}
               </span>
             </div>
+            {
+              autoSchedule.map((value,index) => (
+                <div className="flex col-start-3 col-span-5 items-center justify-center rounded-md">
+                  <div className="flex items-center justify-center rounded-md mr-16">
+                  <div className="flex col-start-3 col-span-5 items-center justify-center rounded-md">
+                    <div className="flex items-center justify-center rounded-md mr-16">
+                      <Slot
+                        value={value}
+                        index={index}
+                        schedule={autoSchedule}
+                        setSchedule={setAutoSchedule}
+                      />
+                    </div>
+                  </div>
+                  </div>
+                </div>
+              ))
+            }
 
-            {autoSchedule.map((s, idx) => (
+            {/* {autoSchedule.map((s, idx) => (
               <div className="flex col-start-3 col-span-5 items-center justify-center rounded-md">
                 <div className="flex items-center justify-center rounded-md mr-16">
                   <div className="flex col-start-3 col-span-5 items-center justify-center rounded-md">
@@ -462,14 +481,14 @@ const Nodes = () => {
                       />
                     </div>
                   </div>
-                  {/* <div className="flex col-start-8 col-span-1 items-center justify-center p-4 rounded-md">
+                  <div className="flex col-start-8 col-span-1 items-center justify-center p-4 rounded-md">
                   <div className="flex items-center justify-center rounded-md mr-16">
                     <RemoveCircleIcon className="text-red-500" />
                   </div>
-                </div> */}
+                </div>
                 </div>
               </div>
-            ))}
+            ))} */}
           </div>
           <div className="flex grid grid-flow-row grid-cols-9 gap-4 grid-rows-1 p-4 bg-blue-200 bg-opacity-25 rounded-md">
           {/* <Button
@@ -683,7 +702,7 @@ const Nodes = () => {
               <span>{/* <AddCircle onClick={handleIncr} /> */}</span>
               <Slider
                 className="ml-2"
-                disabled={!global.isGlobal}
+                disabled={!global.isGlobal || !global.globalStatus}
                 step={null}
                 defaultValue={global.globalValue}
                 marks={marks}
@@ -700,7 +719,7 @@ const Nodes = () => {
               ></Slider>
             </div>
 
-            <div className="flex  col-span-2 items-centers justify-end ">
+            <div className="flex  col-span-4 items-centers justify-center ">
               <Button
                 size='large'
                 disabled={!global.isGlobal || loadingOnOff}
@@ -755,7 +774,7 @@ const Nodes = () => {
                     });
                   
                 }}
-                color={global.globalStatus ? "success" : "error"}
+                color={global.globalStatus ? "error" : "success"}
                 variant="contained"
               >
                 Switch All {global.globalStatus ? "Off" : "On"}

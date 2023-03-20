@@ -7,6 +7,7 @@ import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Skeleton from '@mui/material/Skeleton';
+import { grey } from '@mui/material/colors';
 
 export default function DisplayLogs(){
     const [data,setData] = useState([]);
@@ -26,6 +27,9 @@ export default function DisplayLogs(){
         axios.get(url + "logs/").then((res) => {
             setData(res.data.logs);
             setLoading(false);
+        })
+        .catch((error) => {
+            console.log(error);
         });
     }, []);
 
@@ -72,9 +76,24 @@ export default function DisplayLogs(){
                         const year = date.getFullYear();
                         const time = date.toLocaleString('en-IN',{hour:"2-digit",minute:"2-digit"});
                         const min = date.getMinutes();
+                        const color = handleColor();
+
+                        function handleColor(){
+                            if(record.operation_type === "information"){
+                                return 'info';
+                            }
+                            else if(record.success === true){
+                                return 'success';
+                            }
+                            else if(record.success === false){
+                                return 'error';
+                            }
+                        }
+
                         return (
-                        <Alert 
-                            severity={record.success ? "success" : "error"}
+                        <Alert
+                            color={color}
+                            severity={color}
                             sx={{
                                 fontSize:19,
                                 fontWeight: 'medium'

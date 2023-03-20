@@ -75,6 +75,7 @@ def fetchSunModel() :
     if MASTER.Schedule is True:
         scheduler.add_job(
                             sync_to_schedule,
+                            kwargs={'syncWithAutoInterval' : False},
                             trigger='cron',
                             id = "sync_sunrise",
                             hour = s["sunrise"].hour,
@@ -86,6 +87,7 @@ def fetchSunModel() :
         # Changing scheduled job at sunset
         scheduler.add_job(
                             sync_to_schedule,
+                            kwargs={'syncWithAutoInterval' : False},
                             trigger='cron',
                             id = "sync_sunset",
                             hour = s["sunset"].hour,
@@ -118,6 +120,7 @@ def updater_start():
         if MASTER.syncWithAuto is True:
             scheduler.add_job(
                 sync_to_schedule,
+                kwargs={'syncWithAutoInterval' : True},
                 trigger='interval',
                 minutes=MASTER.syncWithAutoInterval,
                 id='sync_to_auto',
@@ -128,6 +131,7 @@ def updater_start():
             scheduler.add_job(
                 sync_to_schedule,
                 trigger='interval',
+                kwargs={'syncWithAutoInterval' : True},
                 minutes=MASTER.syncWithAutoInterval,
                 id='sync_to_auto',
                 name='sync_every_half_hour',
@@ -169,10 +173,15 @@ def add_dim_jobs_on_startup():
     
 
 
-def sync_to_schedule():
+def sync_to_schedule(syncWithAutoInterval:bool):
     current_time = datetime.datetime.now().strftime("%H:%M")
     sunset = MASTER.SunSet
     sunrise = MASTER.SunRise
+    if syncWithAutoInterval is True:
+        operationType = ('information','information')
+    else:
+        operationType = ('toggle','dim')
+
 
     if current_time >= sunset or current_time < sunrise:
         
@@ -197,14 +206,14 @@ def sync_to_schedule():
         if len(MASTER.failed_nodes) > 0:
             msg = ", ".join(MASTER.failed_nodes)
             Notification.objects.create(
-                operation_type='toggle',
+                operation_type=operationType[0],
                 success = False,
                 message = TOGGLE_FAILURE.format("ON") + msg,
                 timestamp=datetime.datetime.now(tz=get_current_timezone())
             )
         else:
             Notification.objects.create(
-                operation_type='toggle',
+                operation_type=operationType[0],
                 success = True,
                 message = TOGGLE_SUCCESS.format("ON"),
                 timestamp=datetime.datetime.now(tz=get_current_timezone())
@@ -235,14 +244,14 @@ def sync_to_schedule():
                     if len(MASTER.failed_nodes) > 0:
                         msg = ", ".join(MASTER.failed_nodes)
                         Notification.objects.create(
-                            operation_type='dim',
+                            operation_type=operationType[1],
                             success = False,
                             message = DIM_FAILURE.format(slot.intensity) + msg,
                             timestamp=datetime.datetime.now(tz=get_current_timezone())
                         )
                     else:
                         Notification.objects.create(
-                            operation_type='dim',
+                            operation_type=operationType[1],
                             success = True,
                             message = DIM_SUCCESS.format(slot.intensity),
                             timestamp=datetime.datetime.now(tz=get_current_timezone())
@@ -268,14 +277,14 @@ def sync_to_schedule():
                     if len(MASTER.failed_nodes) > 0:
                         msg = ", ".join(MASTER.failed_nodes)
                         Notification.objects.create(
-                            operation_type='dim',
+                            operation_type=operationType[1],
                             success = False,
                             message = DIM_FAILURE.format(slot.intensity) + msg,
                             timestamp=datetime.datetime.now(tz=get_current_timezone())
                         )
                     else:
                         Notification.objects.create(
-                            operation_type='dim',
+                            operation_type=operationType[1],
                             success = True,
                             message = DIM_SUCCESS.format(slot.intensity),
                             timestamp=datetime.datetime.now(tz=get_current_timezone())
@@ -301,14 +310,14 @@ def sync_to_schedule():
         if len(MASTER.failed_nodes) > 0:
             msg = ", ".join(MASTER.failed_nodes)
             Notification.objects.create(
-                operation_type='toggle',
+                operation_type=operationType[0],
                 success = False,
                 message = TOGGLE_FAILURE.format("OFF") + msg,
                 timestamp=datetime.datetime.now(tz=get_current_timezone())
             )
         else:
             Notification.objects.create(
-                operation_type='toggle',
+                operation_type=operationType[0],
                 success = True,
                 message = TOGGLE_SUCCESS.format("OFF"),
                 timestamp=datetime.datetime.now(tz=get_current_timezone())
@@ -331,6 +340,7 @@ def add_sync_jobs():
         if slot.start.strftime("%H:%M") == MASTER.SunSet:
             scheduler.add_job(
                         sync_to_schedule,
+                        kwargs={'syncWithAutoInterval' : False},
                         trigger='cron',
                         id = "sync_sunset",
                         hour = slot.start.hour,
@@ -343,6 +353,7 @@ def add_sync_jobs():
             id = "sync_" + slot.__str__()        
             scheduler.add_job(
                         sync_to_schedule,
+                        kwargs={'syncWithAutoInterval' : False},
                         trigger='cron',
                         id = id,
                         hour = slot.start.hour,
@@ -355,6 +366,7 @@ def add_sync_jobs():
         if slot.end.strftime("%H:%M") == MASTER.SunRise:
             scheduler.add_job(
                         sync_to_schedule,
+                        kwargs={'syncWithAutoInterval' : False},
                         trigger='cron',
                         id = "sync_sunrise",
                         hour = slot.end.hour,
@@ -369,7 +381,7 @@ def add_sync_jobs():
         for job in scheduler.get_jobs():
             print("name: %s, id: %s, trigger: %s, next run: %s, handler: %s" % (job.name,job.id, job.trigger, job.next_run_time, job.func))
     except Exception as e:
-        print('Error in add_sync_jobs - for loop')
+        print('Error in add_sync_jobs - for loop ',str(e))
     
 def delete_logs():
     try:

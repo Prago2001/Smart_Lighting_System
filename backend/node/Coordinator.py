@@ -74,9 +74,9 @@ def perform_dimming(node_name,id,dim_value):
             pass
         counter += 1
         if counter == 1:
-            sleep(2)
-        elif counter == 2:
             sleep(3)
+        elif counter == 2:
+            sleep(5)
         elif counter == 3:
             sleep(5)
     return (False,id)
@@ -95,9 +95,9 @@ def perform_toggle(node_name,id,mains_val):
             pass
         counter += 1
         if counter == 1:
-            sleep(2)
-        elif counter == 2:
             sleep(3)
+        elif counter == 2:
+            sleep(5)
         elif counter == 3:
             sleep(5)
     return (False,id)
