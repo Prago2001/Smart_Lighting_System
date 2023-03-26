@@ -27,7 +27,7 @@ import Stack from '@mui/material/Stack';
 import DisplayLogs from "./Logs/DisplayLogs";
 import ListOfAllSchedules from "./Schedules/ListOfSchedules";
 import DisplaySettings from "./Settings/DisplaySettings";
-import Slot from "./Schedules/Slot";
+import Home from "./Home/Home";
 
 
 const Nodes = () => {
@@ -99,11 +99,6 @@ const Nodes = () => {
         console.log(res.data.nodes);
         console.log(nodes);
       });
-    }
-    else if(newValue == 0){
-      axios.get(url + "getActiveSchedule/").then((res) => {
-        setAutoSchedule(res.data.slots);
-      })
     }
   };
 
@@ -197,30 +192,16 @@ const Nodes = () => {
     //   .catch((error) => console.log(error));
     if (global.isGlobal === true) {
       axios
-        .get(url + "toggle/", 
-        // {
-        //   params: {
-        //     isGlobal: true,
-        //     status: global.globalStatus ? "on" : "off",
-        //   },
-        // }
-        )
+        .get(url + "toggle/")
         .then((res) => {
           console.log(res.data.relay)
-          // setGlobalToggle(global.globalStatus);
           setGlobalToggle(res.data.relay);
           console.log(nodes);
         })
         .catch((error) => console.log(error));
       axios
-        .get(url + "dimming/", 
-        // {
-          // params: { 
-          //   isGlobal: true, value: global.globalValue },
-        // }
-        )
+        .get(url + "dimming/")
         .then((res) => {
-          // set current value
           setGlobalDim(res.data.intensity);
           console.log(nodes);
         })
@@ -414,7 +395,7 @@ const Nodes = () => {
             onChange={handleChangeTab}
             aria-label="basic tabs example"
           >
-            <Tab label="AUTO" {...a11yProps(0)} />
+            <Tab label="HOME" {...a11yProps(0)} />
             <Tab label="MANUAL" {...a11yProps(1)} />
             <Tab label="SCHEDULES" {...a11yProps(2)} />
             <Tab label="LOGS" {...a11yProps(3)}/>
@@ -422,235 +403,22 @@ const Nodes = () => {
           </Tabs>
         </Box>
         <TabPanel value={tab} index={0}>
-          <div className="flex grid grid-flow-row-dense grid-cols-9 grid-rows-2 gap-4 items-center p-4 bg-blue-200 bg-opacity-25 rounded-md">
-            <div className="flex col-span-3 items-center justify-center p-4 rounded-md ">
-              <LightModeIcon className="text-yellow-500" />
-              <span className="font-bold text-gray-700">
-                &nbsp; Sunrise Time: &nbsp;
-              </span>
-              <span className="p-4 bg-gray-50 rounded-md shadow-md text-white bg-blue-500 font-bold">
-                {sun.sunrise}
-              </span>
-            </div>
-            <div className="flex col-span-3 items-center justify-center p-4 rounded-md ">
-              <div className="flex col-span-3 items-center justify-start p-4 bg-blue-100 rounded-md">
-                <HourglassBottomIcon className="text-gray-700" />
-                <span className="font-bold text-gray-700">
-                  &nbsp; For Non-Peak Hours: &nbsp;
-                </span>
-              </div>
-            </div>
-            <div className="flex col-span-3 items-center justify-center rounded-md ">
-              <DarkModeIcon className="text-blue-500" />
+          <Home />
+          {/* <DarkModeIcon className="text-blue-500" />
               <span className="font-bold text-gray-700">
                 &nbsp; Sunset Time: &nbsp;
               </span>
               <span className="p-4 bg-gray-50 rounded-md shadow-md text-white bg-blue-500 font-bold">
                 {sun.sunset}
+              </span> */}
+              {/* <LightModeIcon className="text-yellow-500" />
+              <span className="font-bold text-gray-700">
+                &nbsp; Sunrise Time: &nbsp;
               </span>
-            </div>
-            {
-              autoSchedule.map((value,index) => (
-                <div className="flex col-start-3 col-span-5 items-center justify-center rounded-md">
-                  <div className="flex items-center justify-center rounded-md mr-16">
-                  <div className="flex col-start-3 col-span-5 items-center justify-center rounded-md">
-                    <div className="flex items-center justify-center rounded-md mr-16">
-                      <Slot
-                        value={value}
-                        index={index}
-                        schedule={autoSchedule}
-                        setSchedule={setAutoSchedule}
-                      />
-                    </div>
-                  </div>
-                  </div>
-                </div>
-              ))
-            }
+              <span className="p-4 bg-gray-50 rounded-md shadow-md text-white bg-blue-500 font-bold">
+                {sun.sunrise}
+              </span> */}
 
-            {/* {autoSchedule.map((s, idx) => (
-              <div className="flex col-start-3 col-span-5 items-center justify-center rounded-md">
-                <div className="flex items-center justify-center rounded-md mr-16">
-                  <div className="flex col-start-3 col-span-5 items-center justify-center rounded-md">
-                    <div className="flex items-center justify-center rounded-md mr-16">
-                      <TimeSelecter
-                        val={s}
-                        idx={idx}
-                        sch={autoSchedule}
-                        setSch={setAutoSchedule}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex col-start-8 col-span-1 items-center justify-center p-4 rounded-md">
-                  <div className="flex items-center justify-center rounded-md mr-16">
-                    <RemoveCircleIcon className="text-red-500" />
-                  </div>
-                </div>
-                </div>
-              </div>
-            ))} */}
-          </div>
-          <div className="flex grid grid-flow-row grid-cols-9 gap-4 grid-rows-1 p-4 bg-blue-200 bg-opacity-25 rounded-md">
-          {/* <Button
-              className="col-start-4 col-span-2"
-              variant="contained"
-              // sx={buttonSx}
-              //disabled={syncloading}
-              color={scheduleStatus ? 'error' : 'primary'}
-              onClick={() => {
-                if(scheduleStatus)
-                {
-                  setOpen(true);
-                }
-                else {
-                axios
-                  .put(url + "activateSchedule/",{
-                    params: {
-                      status: !scheduleStatus,
-                    },
-                  }
-                  )
-                  .then((res) => {
-                  setScheduleStatus(!scheduleStatus);
-                });
-              }
-              }}
-            >
-              {scheduleStatus ? "Disable ":"Enable "}Schedules
-              {loading && (
-                <CircularProgress
-                  color="success"
-                  size={24}
-                  sx={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    marginTop: "-12px",
-                    marginLeft: "-12px",
-                  }}
-                />
-              )}
-            </Button>
-            <Dialog 
-              open={open}
-              onClose={() => {setOpen(false)}}
-              aria-labelledby="alert-dialog-title"
-              aria-describedby="alert-dialog-description"
-            >
-              <DialogTitle id="alert-dialog-title">
-                {"ALERT: Disable Schedules?"}
-              </DialogTitle>
-              <DialogContent>
-                <DialogContentText id="alert-dialog-description">
-                  System will not follow schedules on disabling schedules.
-                </DialogContentText>
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={() => {setOpen(false)}}>NO</Button>
-                <Button onClick={() => {
-                  axios
-                  .put(url + "activateSchedule/",{
-                    params: {
-                      status: !scheduleStatus,
-                    },
-                  }
-                  )
-                  .then((res) => {
-                  setScheduleStatus(!scheduleStatus);
-                  setOpen(false);
-                });
-                }} 
-                autoFocus>
-                  YES
-                </Button>
-              </DialogActions>
-            </Dialog> */}
-            <Button
-              className="col-start-6 col-span-2"
-              // color="warning"
-              variant="contained"
-              sx = {{
-                color:'black',
-                backgroundColor:'#ffcc00',
-                ':hover' : {
-                  backgroundColor: darken('#ffcc00', 0.1),
-                }
-              }}
-              disabled={syncloading || !scheduleStatus}
-              onClick={() => {
-                setSyncloading(true);
-                setDisplayAlertTab(false);
-                setDisplaySuccessTab(false);
-                axios.get(url + "sync/").then((res) => {
-                  
-                  axios.get(url + "getRetryJobStatus/",{
-
-                    }).then((res) => {
-                    // console.log('Retry job done...')
-                      if(res.data.operation == false){
-                        setFailedNodes(res.data.nodes);
-                        setDisplayAlertTab(true);
-                      }
-                      else{
-                        setDisplaySuccessTab(true);
-                      }
-                      setSyncloading(false);
-                    });
-                  });
-              }}
-            >
-              Sync with Auto
-              {syncloading && (
-                <CircularProgress
-                  color="success"
-                  size={24}
-                  sx={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    marginTop: "-12px",
-                    marginLeft: "-12px",
-                  }}
-                />
-              )}
-            </Button>
-            <Button
-              className="col-start-8 col-span-2"
-              variant="contained"
-              // sx={buttonSx}
-              disabled={applyloading}
-              onClick={() => {
-                //run validation
-                setApplyloading(true);
-                setPointerEvent(true);
-                axios
-                  .post(url + "setSchedule/", {
-                    schedule: autoSchedule,
-                  })
-                  .then((res) => {
-                    //if (res.data.succ == "done")
-                      setApplyloading(false);
-                      setPointerEvent(false);
-
-                  });
-              }}
-            >
-              Apply Changes
-              {loading && (
-                <CircularProgress
-                  color="success"
-                  size={24}
-                  sx={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    marginTop: "-12px",
-                    marginLeft: "-12px",
-                  }}
-                />
-              )}
-            </Button>
-          </div>
         </TabPanel> 
         <TabPanel value={tab} index={1}>
           <div className="flex grid grid-flow-col grid-cols-12 gap-5 items-center p-4 px-2 bg-blue-200 bg-opacity-25 rounded-md mb-7">
@@ -719,7 +487,7 @@ const Nodes = () => {
               ></Slider>
             </div>
 
-            <div className="flex  col-span-4 items-centers justify-center ">
+            <div className="flex  col-span-2 items-centers justify-center ">
               <Button
                 size='large'
                 disabled={!global.isGlobal || loadingOnOff}
@@ -779,6 +547,78 @@ const Nodes = () => {
               >
                 Switch All {global.globalStatus ? "Off" : "On"}
                 {loadingOnOff && (
+                  <CircularProgress
+                    color="success"
+                    size={24}
+                    sx={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      marginTop: "-12px",
+                      marginLeft: "-12px",
+                    }}
+                  />
+                )}
+              </Button>
+            </div>
+            <div className="flex  col-span-2 items-centers justify-center ">
+              <Button
+                variant="contained"
+                size='large'
+                sx = {{
+                  color:'black',
+                  backgroundColor:'#ffcc00',
+                  ':hover' : {
+                    backgroundColor: darken('#ffcc00', 0.1),
+                  }
+                }}
+                disabled={syncloading || !scheduleStatus || !global.isGlobal}
+                onClick={() => {
+                  setSyncloading(true);
+                  setDisplayAlertTab(false);
+                  setDisplaySuccessTab(false);
+                  setPointerEvent(true);
+                  
+                  axios.get(url + "sync/").then((res) => {
+                    
+                    axios.get(url + "getRetryJobStatus/",{
+
+                      }).then((res) => {
+                      // console.log('Retry job done...')
+                        if(res.data.operation == false){
+                          setFailedNodes(res.data.nodes);
+                          setDisplayAlertTab(true);
+                        }
+                        else{
+                          setDisplaySuccessTab(true);
+                        }
+                        setSyncloading(false);
+                        setPointerEvent(false);
+                        axios.get(url + "getNodes/").then((res) => {
+                          setNodes(res.data.nodes);
+                        });
+                        axios
+                          .get(url + "toggle/")
+                          .then((res) => {
+                            console.log(res.data.relay)
+                            setGlobalToggle(res.data.relay);
+                            console.log(nodes);
+                          })
+                          .catch((error) => console.log(error));
+                        axios
+                          .get(url + "dimming/")
+                          .then((res) => {
+                            setGlobalDim(res.data.intensity);
+                            console.log(nodes);
+                          })
+                          .catch((error) => console.log(error));
+                        });
+
+                  });
+                }}
+              >
+                Sync with Auto
+                {syncloading && (
                   <CircularProgress
                     color="success"
                     size={24}

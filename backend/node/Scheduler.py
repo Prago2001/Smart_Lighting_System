@@ -108,7 +108,7 @@ def updater_start():
             trigger='interval',
             id='delete_logs',
             name="Delete logs after every 48 hours",
-            days=2,
+            days=1,
             next_run_time=datetime.datetime.combine(datetime.date.today() + timedelta(days=1),datetime.time(hour=1),tzinfo=get_current_timezone()),
             timezone='Asia/Kolkata'
         )
@@ -145,7 +145,10 @@ def updater_start():
                 if job.name in ('dimming_job','sync_to_schedule','sync_every_half_hour'):
                     job.pause()
         for job in scheduler.get_jobs():
-            print("name: %s, id: %s, trigger: %s, next run: %s, handler: %s" % (job.name,job.id, job.trigger, job.next_run_time, job.func))
+            print(f"Name - {job.name}, ID - {job.id}",
+                  f"Trigger - {job.trigger}",
+                  f"Next Run Time - {job.next_run_time}",
+                  sep="\n\t")
     except Exception as e:
         print("Error in updater_start: ",e)
 
@@ -379,7 +382,10 @@ def add_sync_jobs():
     job:Job
     try:
         for job in scheduler.get_jobs():
-            print("name: %s, id: %s, trigger: %s, next run: %s, handler: %s" % (job.name,job.id, job.trigger, job.next_run_time, job.func))
+            print(f"Name - {job.name}, ID - {job.id}",
+                f"Trigger - {job.trigger}",
+                f"Next Run Time - {job.next_run_time}",
+                sep="\n\t")
     except Exception as e:
         print('Error in add_sync_jobs - for loop ',str(e))
     
@@ -387,7 +393,7 @@ def delete_logs():
     try:
         threshold = datetime.datetime.now(tz=get_current_timezone()) - timedelta(days=2)
         Notification.objects.filter(timestamp__lt=threshold).delete()
-        TemperatureMeasurement.objects.filter(timestamp__lt=threshold).delete()
-        CurrentMeasurement.objects.filter(timestamp__lt=threshold).delete()
+        TemperatureMeasurement.objects.filter(dateTimeStamp__lt=threshold).delete()
+        CurrentMeasurement.objects.filter(dateTimeStamp__lt=threshold).delete()
     except Exception as e:
         print("Error in deleting logs")
