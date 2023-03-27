@@ -11,6 +11,7 @@ import EnableDisableSchedule from "./EnableDisableSchedules";
 import EnableDisableTelemetry from "./EnableDisableTelemetry";
 import SyncWithAutoInterval from "./SyncWithAutoInterval";
 import SystemInfo from "./SystemInfo";
+import DeleteLogs from "./DeleteLogs";
 
 export default function DisplaySettings(){
     
@@ -20,7 +21,8 @@ export default function DisplaySettings(){
         "Enable/Disable Schedules",
         "Enable/Disable Telemetry",
         "Sync with Auto Interval",
-        "System Info"
+        "Delete Logs",
+        "System Info",
     ];
     return(
         <Grid container spacing={1} sx={{height:'100%',m:4,p:4,ml:-4,fontSize:20,mt:-4}}>
@@ -72,6 +74,11 @@ export default function DisplaySettings(){
                     else if(currentSetting === "System Info"){
                         return(
                             <SystemInfo/>
+                        )
+                    }
+                    else if(currentSetting === "Delete Logs"){
+                        return(
+                            <DeleteLogs />
                         )
                     }
                 })()}

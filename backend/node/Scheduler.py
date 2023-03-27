@@ -107,7 +107,7 @@ def updater_start():
             delete_logs,
             trigger='interval',
             id='delete_logs',
-            name="Delete logs after every 48 hours",
+            name="Delete logs after every 24 hours",
             days=1,
             next_run_time=datetime.datetime.combine(datetime.date.today() + timedelta(days=1),datetime.time(hour=1),tzinfo=get_current_timezone()),
             timezone='Asia/Kolkata'
@@ -144,11 +144,7 @@ def updater_start():
             for job in scheduler.get_jobs():
                 if job.name in ('dimming_job','sync_to_schedule','sync_every_half_hour'):
                     job.pause()
-        for job in scheduler.get_jobs():
-            print(f"Name - {job.name}, ID - {job.id}",
-                  f"Trigger - {job.trigger}",
-                  f"Next Run Time - {job.next_run_time}",
-                  sep="\n\t")
+        scheduler.print_jobs()
     except Exception as e:
         print("Error in updater_start: ",e)
 
@@ -378,14 +374,8 @@ def add_sync_jobs():
                         replace_existing=True,
                         name='sync_to_schedule'
                     )
-    
-    job:Job
     try:
-        for job in scheduler.get_jobs():
-            print(f"Name - {job.name}, ID - {job.id}",
-                f"Trigger - {job.trigger}",
-                f"Next Run Time - {job.next_run_time}",
-                sep="\n\t")
+        scheduler.print_jobs()
     except Exception as e:
         print('Error in add_sync_jobs - for loop ',str(e))
     
@@ -396,4 +386,16 @@ def delete_logs():
         TemperatureMeasurement.objects.filter(dateTimeStamp__lt=threshold).delete()
         CurrentMeasurement.objects.filter(dateTimeStamp__lt=threshold).delete()
     except Exception as e:
-        print("Error in deleting logs")
+        Notification.objects.create(
+                operation_type='information',
+                success = False,
+                message = "Logs, current and temperature data deletion failed.",
+                timestamp=datetime.datetime.now(tz=get_current_timezone())
+        )
+    else:
+        Notification.objects.create(
+                operation_type='information',
+                success = True,
+                message = "Logs, current and temperature data deleted successfully.",
+                timestamp=datetime.datetime.now(tz=get_current_timezone())
+        )

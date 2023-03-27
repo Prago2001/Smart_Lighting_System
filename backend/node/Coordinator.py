@@ -60,6 +60,7 @@ def retry_dim(nodes,dim_val):
     MASTER.scheduledJobStatus = False
 
 def perform_dimming(node_name,id,dim_value):
+    sleep(2)
     print(f"Starting thread in {node_name}")
     counter = 0
     while counter < 4:
@@ -82,6 +83,7 @@ def perform_dimming(node_name,id,dim_value):
     return (False,id)
 
 def perform_toggle(node_name,id,mains_val):
+    sleep(2)
     print(f"Starting thread in {node_name}")
     counter = 0
     while counter < 4:
@@ -105,7 +107,7 @@ def perform_toggle(node_name,id,mains_val):
     
 
 def get_curr_temp_val_async(node_name,id):
-    
+    sleep(2)
     counter = 0
     while counter < 3:
         remote = MASTER.get_node(node_name) 
@@ -118,7 +120,7 @@ def get_curr_temp_val_async(node_name,id):
             except Exception as e:
                 print(str(e))
         counter+=1
-        sleep(1)
+        sleep(2)
     
     return (id,False,0,0)
 
