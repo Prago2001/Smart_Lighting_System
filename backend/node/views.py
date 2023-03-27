@@ -1,7 +1,7 @@
 import json
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .Scheduler import fetchSunModel, scheduler, function_mapping, sync_to_schedule, add_sync_jobs
+from .Scheduler import fetchSunModel, scheduler, function_mapping, sync_to_schedule, add_sync_jobs,delete_logs
 import pytz
 from dateutil import parser
 from datetime import timedelta
@@ -440,9 +440,7 @@ def enable_disable_telemetry(request):
                 if job.name == "current_temperature_values":
                     job.resume()
         
-        print("JOB LIST : ")
-        for job in scheduler.get_jobs():
-            print("name: %s, trigger: %s, next run: %s, handler: %s" % (job.name, job.trigger, job.next_run_time, job.func))
+        scheduler.print_jobs()
         write_config_file()
         return Response(data={"message":"Success"})
 
@@ -470,9 +468,7 @@ def enable_disable_schedule(request):
                 if job.name == 'sync_every_half_hour' and MASTER.syncWithAuto is True:
                     job.resume()
         
-        print("JOB LIST : ")
-        for job in scheduler.get_jobs():
-            print("name: %s, trigger: %s, next run: %s, handler: %s" % (job.name, job.trigger, job.next_run_time, job.func))
+        scheduler.print_jobs()
         write_config_file()
         return Response(data={"message":"Success"})
 
@@ -509,17 +505,22 @@ def getRetryJobStatus(response):
     else:
         return Response({'operation':False,'nodes':failedNodes})
 
-@api_view(['GET'])
+@api_view(['GET','DELETE'])
 def logs(request):
-    data = []
-    for record in Notification.objects.all().order_by('-timestamp'):
-        data.append({
-            'operation_type': record.operation_type,
-            'success': record.success,
-            'message': record.message,
-            'timestamp': record.timestamp.astimezone(tz=get_current_timezone()),
-        })
-    return Response({'logs':data})
+    if request.method == "GET":
+        data = []
+        for record in Notification.objects.all().order_by('-timestamp'):
+            data.append({
+                'operation_type': record.operation_type,
+                'success': record.success,
+                'message': record.message,
+                'timestamp': record.timestamp.astimezone(tz=get_current_timezone()),
+            })
+        return Response({'logs':data})
+    elif request.method == "DELETE":
+        delete_logs()
+        return Response({"message":"success"})
+
 
 @api_view(['GET','PUT'])
 def alerts(request):
@@ -798,8 +799,6 @@ def sync_with_auto_interval(request):
                 timezone='Asia/Kolkata',
                 replace_existing=True
             )
-        print("JOB LIST : ")
-        for job in scheduler.get_jobs():
-            print("name: %s, trigger: %s, next run: %s, handler: %s" % (job.name, job.trigger, job.next_run_time, job.func))
+        scheduler.print_jobs()
         write_config_file()
         return Response({'message':'Success'})
