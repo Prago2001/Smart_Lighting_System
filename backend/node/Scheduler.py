@@ -374,8 +374,6 @@ def add_sync_jobs():
                         replace_existing=True,
                         name='sync_to_schedule'
                     )
-    
-    job:Job
     try:
         scheduler.print_jobs()
     except Exception as e:
