@@ -8,7 +8,7 @@ from .Coordinator import get_curr_temp_val_async,retry_dim,retry_mains
 import concurrent.futures
 from django.utils.timezone import get_current_timezone
 from apscheduler.job import Job
-
+from .utils import write_end_time_energy,write_start_time_energy,update_energy_config_file
 try:
     from .Coordinator import MASTER
 except Exception as e:
@@ -110,6 +110,15 @@ def updater_start():
             name="Delete logs after every 24 hours",
             days=1,
             next_run_time=datetime.datetime.combine(datetime.date.today() + timedelta(days=1),datetime.time(hour=1),tzinfo=get_current_timezone()),
+            timezone='Asia/Kolkata'
+        )
+        scheduler.add_job(
+            update_energy_config_file,
+            trigger='interval',
+            id="update_energy_saved",
+            name="Update energy saved after every 24 hours",
+            days=1,
+            next_run_time=datetime.datetime.combine(datetime.date.today() + timedelta(days=1),datetime.time(hour=8),tzinfo=get_current_timezone()),
             timezone='Asia/Kolkata'
         )
         if MASTER.Telemetry is True:
@@ -226,6 +235,8 @@ def sync_to_schedule(syncWithAutoInterval:bool):
             if start < end:
                 if start <= current_time < end:
                     failed_nodes = MASTER.set_dim_value(slot.intensity)
+                    write_end_time_energy()
+                    write_start_time_energy(slot.intensity,mains=True)
                     if len(failed_nodes) > 0 :
                         MASTER.scheduledJobStatus = True
                         scheduler.add_job(
@@ -256,9 +267,12 @@ def sync_to_schedule(syncWithAutoInterval:bool):
                             timestamp=datetime.datetime.now(tz=get_current_timezone())
                         )
                     break
+
             else:
                 if current_time >= start or current_time < end:
                     failed_nodes = MASTER.set_dim_value(slot.intensity)
+                    write_end_time_energy()
+                    write_start_time_energy(slot.intensity,mains=True)
                     if len(failed_nodes) > 0 :
                         MASTER.scheduledJobStatus = True
                         scheduler.add_job(
@@ -292,6 +306,8 @@ def sync_to_schedule(syncWithAutoInterval:bool):
         MASTER.failed_nodes = []
     else:
         failed_nodes = MASTER.make_all_off()
+        write_end_time_energy()
+        write_start_time_energy(intensity=0,mains=False)
         if len(failed_nodes) > 0:
             MASTER.scheduledJobStatus = True
             scheduler.add_job(

@@ -13,7 +13,7 @@ from .Coordinator import perform_dimming,perform_toggle,retry_mains, retry_dim
 from apscheduler.job import Job
 from django.utils.timezone import get_current_timezone
 import random
-from .utils import read_config_file,write_config_file
+from .utils import read_config_file,write_config_file,write_end_time_energy,write_start_time_energy,update_energy_config_file
 try:
     from .Coordinator import MASTER
 except Exception as e:
@@ -111,10 +111,16 @@ def toggle_mains(request):
         if 'isGlobal' in params and params['isGlobal'] is True:
             status = params['status']
 
+            write_end_time_energy()
             if status == "on":
                 switch_mains_value = True
+                node = Slave.objects.all().order_by('-is_active').first()
+                if node is not None:
+                    write_start_time_energy(mains=True,intensity=node.dim_val)
             else:
                 switch_mains_value = False
+                write_start_time_energy(mains=False,intensity=0)
+
             
             failed_nodes = {}
 
@@ -193,6 +199,9 @@ def dim_to(request):
 
         if 'isGlobal' in params and params['isGlobal'] is True:
             dim_to_value = int(params["value"])
+
+            write_end_time_energy()
+            write_start_time_energy(mains=True,intensity=dim_to_value)
 
             failed_nodes = {}
 
@@ -330,6 +339,8 @@ def syncToSchedule(request):
             if start < end:
                 if start <= current_time < end:
                     failed_nodes = MASTER.set_dim_value(slot.intensity)
+                    write_end_time_energy()
+                    write_start_time_energy(slot.intensity,mains=True)
                     if len(failed_nodes) > 0:
                         MASTER.manualJobStatus = True
                         scheduler.add_job(
@@ -345,6 +356,8 @@ def syncToSchedule(request):
             else:
                 if current_time >= start or current_time < end:
                     failed_nodes = MASTER.set_dim_value(slot.intensity)
+                    write_end_time_energy()
+                    write_start_time_energy(slot.intensity,mains=True)
                     if len(failed_nodes) > 0:
                         MASTER.manualJobStatus = True
                         scheduler.add_job(
@@ -360,6 +373,8 @@ def syncToSchedule(request):
             
     else:
         failed_nodes = MASTER.make_all_off()
+        write_end_time_energy()
+        write_start_time_energy(0,mains=False)
         if len(failed_nodes) > 0:
             MASTER.manualJobStatus = True
             scheduler.add_job(

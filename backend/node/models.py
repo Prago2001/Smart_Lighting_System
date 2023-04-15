@@ -86,3 +86,19 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.operation_type
+
+
+class Energy(models.Model):
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField(null=True)
+    consumption = models.FloatField(null=True)
+    saved = models.FloatField(null=True)
+    intensity = models.IntegerField(default=25,choices=
+    [   
+        (0,"0"),
+        (25,"25"),
+        (50,"50"),
+        (75,"75"),
+        (100,"100")
+    ])
+    mains = models.BooleanField()

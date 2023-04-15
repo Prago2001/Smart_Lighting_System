@@ -149,6 +149,9 @@ class Coordinator(metaclass=Singleton):
         self.areaName = ""
         self.syncWithAuto = True
         self.syncWithAutoInterval = 30
+        self.number_of_nodes = 0
+        self.energy_saved = 0
+        
 
     def discover_nodes(self) -> List[Remote]:
         self.nodes : List[Remote] = []
@@ -165,6 +168,7 @@ class Coordinator(metaclass=Singleton):
         except Exception as e:
             print(f"Error in discover_nodes: {e}")
             pass
+        self.number_of_nodes = len(self.nodes)
         return self.nodes
     
     def get_node(self,node_name:str):

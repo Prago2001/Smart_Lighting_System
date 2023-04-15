@@ -9,13 +9,22 @@ class NodeConfig(AppConfig):
     def ready(self):
         try:
             from .Coordinator import MASTER
-            from .models import Slave,Schedule,Slot
+            from .models import Slave,Schedule,Slot,Energy
             import datetime
             from .Scheduler import fetchSunModel,updater_start,add_dim_jobs_on_startup,sync_to_schedule
             from .Scheduler import add_sync_jobs
             from .views import changeSchedule
             from .utils import read_config_file, write_config_file
-            Slave.objects.all().delete()
+            
+            # Slave.objects.all().delete()
+            # This piece of code is to ensure that the last energy object
+            # will get deleted as it will be having null values in 
+            # end_time, consumption and saved
+            last_energy_object = Energy.objects.last()
+            if last_energy_object is not None:
+                last_energy_object.delete()
+            
+            
             counter = Slave.objects.count()+1
             for node in MASTER.discover_nodes():
                 if not Slave.objects.filter(unique_id = node._64bit_addr).exists():
