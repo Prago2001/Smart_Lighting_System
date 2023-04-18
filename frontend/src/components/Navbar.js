@@ -39,70 +39,45 @@ function Navbar({ fixed }) {
 
   // const [navbarOpen, setNavbarOpen] = React.useState(false);
   return (
-    <>
-      <nav className="sticky top-0 z-99 flex flex-wrap items-center px-2 py-1 bg-gray-700 mb-3">
-        <div className="container px-4 mx-auto flex flex-wrap items-center">
-          <div className="w-full relative flex justify-between lg:w-auto lg:static lg:block lg:justify-start">
-            <a
-              className="justify-start text-sm font-bold leading-relaxed inline-block whitespace-nowrap uppercase text-white"
-              href="#pablo"
-            >
-              <EmojiObjectsIcon className="flex items-center text-xs" />
-              <span className="ml-2">Light It Up!</span>
-            </a>
-            {/* <button
-              className="text-white cursor-pointer text-xl leading-none px-3 py-1 border border-solid border-transparent rounded bg-transparent block lg:hidden outline-none focus:outline-none"
-              type="button"
-              onClick={() => setNavbarOpen(!navbarOpen)}
-            >
-              <i className="fas fa-bars"></i>
-            </button> */}
-          </div>
-          <div
-            className={"lg:flex flex-grow items-center"}
-            id="example-navbar-danger"
-          >
-            <ul className="flex flex-col lg:flex-row list-none lg:ml-auto">
-              <li className="nav-item">
-                <div className="px-3 py-2 flex items-center text-sm uppercase font-bold leading-snug text-white hover:opacity-75">
-                  <Notifications
-                    icon="https://assets.ifttt.com/images/channels/651849913/icons/monochrome_large.png"
-                    data={data}
-                    // markAsRead={data => console.log(data)}
-                    header={{
-                      title: "Alerts",
-                      option: { text: "Mark as Read All", onClick:( () => {
-                        let array = new Array();
-                        data.map((record) => {
-                          array.push(record.id)
-                        })
-                        axios.put(url + 'alerts/',{
-                          params : {id_array : array}
-                        })
-                        .then((res) => {
-                          setData([]);
-                        })
-                      })}
-                    }}
-                  />
-                </div>
-              </li>
+    <nav class="bg-gray-700 py-4 md:py-4 text-white text-2xl font-semibold">
+      <div class="grid grid-cols-3 sm:grid-cols-6 justify-center">
 
-              <li className="nav-item">
-                <Link
-                  to="/nodes"
-                  className="px-3 py-2 flex items-center text-sm uppercase font-bold leading-snug text-white hover:opacity-75"
-                  href="#pablo"
-                >
-                  {JSON.parse(localStorage.getItem("area_name"))}
-                </Link>
-              </li>
-            </ul>
-          </div>
+        <div class="flex justify-center items-center col-span-2 col-start-1">
+          <EmojiObjectsIcon className="flex items-center" />
+          <span className="ml-2">Light It Up!</span>
         </div>
-      </nav>
-    </>
-  );
+        <div class="flex justify-center items-center col-span-2 col-start-3">
+          <span class="text-4xl uppercase">{JSON.parse(localStorage.getItem("area_name"))}</span>
+        </div>
+        <div class="flex justify-center items-center col-span-2 col-start-5">
+          <Notifications
+            icon="https://assets.ifttt.com/images/channels/651849913/icons/monochrome_large.png"
+            data={data}
+            // markAsRead={data => console.log(data)}
+            header={{
+              title: "Alerts",
+              option: { text: "Mark as Read All", onClick:( () => {
+                let array = new Array();
+                data.map((record) => {
+                  array.push(record.id)
+                })
+                axios.put(url + 'alerts/',{
+                  params : {id_array : array}
+                })
+                .then((res) => {
+                  setData([]);
+                })
+              })}
+            }}
+          />
+        </div>
+
+        
+      </div>
+    </nav>
+
+  )
+
 }
 
 export default Navbar;

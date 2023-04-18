@@ -48,7 +48,7 @@ export default function Home(){
 
     return (
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 justify-center">
-            <div class="bg-secondary shadow-2xl p-6 rounded-2xl">
+            <div class="bg-yellow-500 shadow-2xl p-6 rounded-2xl">
                 <div class="flex items-center">
                     <span class="flex items-center justify-center rounded-full">
                         <WbSunnyRoundedIcon fontSize="large" />
@@ -66,7 +66,7 @@ export default function Home(){
                 </div>
                 <span class="block text-4xl font-semibold mt-4 text-center">{active} / {total}</span>
             </div>
-            <div class="bg-secondary shadow-2xl p-6 rounded-2xl ">
+            <div class="bg-yellow-500 shadow-2xl p-6 rounded-2xl ">
                 <div class="flex items-center place-content-end">
                     <span class="mr-2 text-2xl font-semibold text-black justify-center">Sunset</span>
                     <span class="flex items-center justify-center rounded-full">

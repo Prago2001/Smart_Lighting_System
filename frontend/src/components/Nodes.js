@@ -307,7 +307,7 @@ const Nodes = () => {
             <CircularProgress />
         </DialogContent>
       </Dialog>
-      <div className="flex grid grid-flow-row grid-rows-2 items-center m-2 mx-10">
+      {/* <div className="flex grid grid-flow-row grid-rows-2 items-center m-2 mx-10">
         <div className="flex col-span-4 items-center justify-start text-2xl text-primary font-bold bg-gray-200 p-3 rounded-md">
           {JSON.parse(localStorage.getItem("area_name"))}
         </div>
@@ -376,22 +376,49 @@ const Nodes = () => {
             })()
           }
         </div>
-      </div>
+      </div> */}
       
         
 
-      <Box className="p-6 m-4">
+      <Box className="p-6 m-4 ">
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs
             value={tab}
             onChange={handleChangeTab}
             aria-label="basic tabs example"
+            
+            
           >
-            <Tab label="HOME" {...a11yProps(0)} />
-            <Tab label="MANUAL" {...a11yProps(1)} />
-            <Tab label="SCHEDULES" {...a11yProps(2)} />
-            <Tab label="LOGS" {...a11yProps(3)}/>
-            <Tab label="SETTINGS" {...a11yProps(4)}/>
+            <Tab label="HOME" {...a11yProps(0)} 
+            sx = {{
+              fontWeight: 'bold',
+              fontSize: 22
+            }}
+            />
+            <Tab label="MANUAL" {...a11yProps(1)} 
+              sx = {{
+                fontWeight: 'bold',
+                fontSize: 22
+              }}
+            />
+            <Tab label="SCHEDULES" {...a11yProps(2)}
+              sx = {{
+                fontWeight: 'bold',
+                fontSize: 22
+              }}
+             />
+            <Tab label="LOGS" {...a11yProps(3)}
+              sx = {{
+                fontWeight: 'bold',
+                fontSize: 22
+              }}
+            />
+            <Tab label="SETTINGS" {...a11yProps(4)}
+              sx = {{
+                fontWeight: 'bold',
+                fontSize: 22
+              }}
+            />
           </Tabs>
         </Box>
         <TabPanel value={tab} index={0}>
