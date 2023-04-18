@@ -13,7 +13,7 @@ from .Coordinator import perform_dimming,perform_toggle,retry_mains, retry_dim
 from apscheduler.job import Job
 from django.utils.timezone import get_current_timezone
 import random
-from .utils import read_config_file,write_config_file,write_end_time_energy,write_start_time_energy,update_energy_config_file
+from .utils import read_config_file,write_config_file,write_end_time_energy,write_start_time_energy,update_energy_config_file, get_package_info
 try:
     from .Coordinator import MASTER
 except Exception as e:
@@ -150,7 +150,7 @@ def toggle_mains(request):
                 name="Retrying mains operation in manual mode",
                 replace_existing=True,
                 run_date=datetime.datetime.now() + timedelta(seconds=15),
-                timezone = 'Asia/Kolkata',
+                timezone = MASTER.location['timezone'],
                 )
                 return Response({"operation":False,"nodes":failed_nodes.keys()})
             
@@ -231,7 +231,7 @@ def dim_to(request):
                 name="Retrying dim operation in manual mode",
                 replace_existing=True,
                 run_date=datetime.datetime.now() + timedelta(seconds=15),
-                timezone = 'Asia/Kolkata',
+                timezone = MASTER.location['timezone'],
                 )
                 return Response({"operation":False,"nodes":failed_nodes.keys()})
         else:
@@ -295,8 +295,8 @@ def changeSchedule(request):
     slots = Slot.objects.filter(schedule=current_active_schedule).order_by('id')
     for i in range(len(slots)):
         row = schedule[i]
-        start = parser.isoparse(row['from']).astimezone(pytz.timezone('Asia/Kolkata'))
-        end = parser.isoparse(row['to']).astimezone(pytz.timezone('Asia/Kolkata'))
+        start = parser.isoparse(row['from']).astimezone(pytz.timezone(MASTER.location['timezone']))
+        end = parser.isoparse(row['to']).astimezone(pytz.timezone(MASTER.location['timezone']))
         intensity = int(row['i'])
 
         slots[i].start = start
@@ -327,7 +327,7 @@ def syncToSchedule(request):
                 name="Retrying mains operation in manual mode",
                 replace_existing=True,
                 run_date=datetime.datetime.now() + timedelta(seconds=15),
-                timezone = 'Asia/Kolkata',
+                timezone = MASTER.location['timezone'],
             )
         current_schedule = Schedule.objects.get(currently_active = True)
         slots = Slot.objects.filter(schedule=current_schedule).order_by('id')
@@ -351,7 +351,7 @@ def syncToSchedule(request):
                             name="Retrying dim operation in manual mode",
                             replace_existing=True,
                             run_date=datetime.datetime.now() + timedelta(seconds=15),
-                            timezone = 'Asia/Kolkata',
+                            timezone = MASTER.location['timezone'],
                         )
             else:
                 if current_time >= start or current_time < end:
@@ -368,7 +368,7 @@ def syncToSchedule(request):
                             name="Retrying dim operation in manual mode",
                             replace_existing=True,
                             run_date=datetime.datetime.now() + timedelta(seconds=15),
-                            timezone = 'Asia/Kolkata',
+                            timezone = MASTER.location['timezone'],
                         )
             
     else:
@@ -385,7 +385,7 @@ def syncToSchedule(request):
                 name="Retrying mains operation in manual mode",
                 replace_existing=True,
                 run_date=datetime.datetime.now() + timedelta(seconds=15),
-                timezone = 'Asia/Kolkata',
+                timezone = MASTER.location['timezone'],
             )
         
     return Response({"message":"Success"})
@@ -689,8 +689,8 @@ def createOrEditSchedule(request):
         
         for i in range(no_of_slots):
             row = schedule[i]
-            start = parser.isoparse(row['from']).astimezone(pytz.timezone('Asia/Kolkata'))
-            end = parser.isoparse(row['to']).astimezone(pytz.timezone('Asia/Kolkata'))
+            start = parser.isoparse(row['from']).astimezone(pytz.timezone(MASTER.location['timezone']))
+            end = parser.isoparse(row['to']).astimezone(pytz.timezone(MASTER.location['timezone']))
             intensity = row['i']
 
             #start =  datetime.time(int(schedules_list[i][0]),int((schedules_list[i][0]%1)*100))   
@@ -718,8 +718,8 @@ def createOrEditSchedule(request):
         
         for i in range(no_of_slots):
             row = schedule[i]
-            start = parser.isoparse(row['from']).astimezone(pytz.timezone('Asia/Kolkata'))
-            end = parser.isoparse(row['to']).astimezone(pytz.timezone('Asia/Kolkata'))
+            start = parser.isoparse(row['from']).astimezone(pytz.timezone(MASTER.location['timezone']))
+            end = parser.isoparse(row['to']).astimezone(pytz.timezone(MASTER.location['timezone']))
             intensity = int(row['i'])
 
             slots[i].start = start
@@ -811,7 +811,7 @@ def sync_with_auto_interval(request):
                 minutes=MASTER.syncWithAutoInterval,
                 id='sync_to_auto',
                 name='sync_every_half_hour',
-                timezone='Asia/Kolkata',
+                timezone=MASTER.location['timezone'],
                 replace_existing=True
             )
         scheduler.print_jobs()
@@ -863,6 +863,22 @@ def information(request):
                     break
         data['energy_saved'] = round(MASTER.energy_saved,2)
         return Response(data)
+
+@api_view(["GET"])
+def system_information(request):
+    if request.method == "GET":
+        data = {}
+        package_info = get_package_info()
+        if package_info is None:
+            data["version"] = "v4.3"
+            data["release_date"] = "19 April 2023"
+        else:
+            data["version"] = package_info[1]
+            data["release_date"] = package_info[0]
         
-        
-        
+        data["city"] = MASTER.location["city"]
+        data["region"] = MASTER.location["region"]
+        data["lat"] = MASTER.location["latitude"]
+        data["lon"] = MASTER.location["longitude"]
+
+        return Response(data)

@@ -14,8 +14,8 @@ class NodeConfig(AppConfig):
             from .Scheduler import fetchSunModel,updater_start,add_dim_jobs_on_startup,sync_to_schedule
             from .Scheduler import add_sync_jobs
             from .views import changeSchedule
-            from .utils import read_config_file, write_config_file
-            
+            from .utils import read_config_file, write_config_file, get_location
+            get_location()
             # Slave.objects.all().delete()
             # This piece of code is to ensure that the last energy object
             # will get deleted as it will be having null values in 

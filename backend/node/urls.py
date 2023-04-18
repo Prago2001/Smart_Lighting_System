@@ -27,4 +27,5 @@ urlpatterns = [
     path('areaName/',views.areaName),
     path('syncWithAutoInterval',views.sync_with_auto_interval),
     path('information/',views.information),
+    path('systemInformation/',views.system_information)
 ]

@@ -49,7 +49,13 @@ def getInsValues():
 
 def fetchSunModel() :
 
-    city = LocationInfo(name="pune", region="India", timezone="Asia/Kolkata", latitude=18.6452489, longitude=73.92318563785392)
+    city = LocationInfo(
+        name=MASTER.location['city'], 
+        region=MASTER.location['region'], 
+        timezone=MASTER.location['timezone'], 
+        latitude=MASTER.location['latitude'], 
+        longitude=MASTER.location['longitude']
+        )
     s = sun(city.observer, tzinfo=city.timezone)
     MASTER.sunrise_timestamp = s['sunrise']
     MASTER.sunset_timestamp = s['sunset']
@@ -82,7 +88,7 @@ def fetchSunModel() :
                             id = "sync_sunrise",
                             hour = s["sunrise"].hour,
                             minute = s["sunrise"].minute,
-                            timezone = 'Asia/Kolkata',
+                            timezone = MASTER.location['timezone'],
                             replace_existing=True,
                             name='sync_to_schedule'
         )
@@ -96,7 +102,7 @@ def fetchSunModel() :
                             id = "sync_sunset",
                             hour = s["sunset"].hour,
                             minute = s["sunset"].minute,
-                            timezone = 'Asia/Kolkata',
+                            timezone = MASTER.location['timezone'],
                             replace_existing=True,
                             name='sync_to_schedule'
         )
@@ -106,7 +112,7 @@ def fetchSunModel() :
 
 def updater_start():
     try:
-        scheduler.add_job(fetchSunModel, 'cron', id='sunmodel', hour=0, minute=15, timezone='Asia/Kolkata',name='sunrise_sunset_values')
+        scheduler.add_job(fetchSunModel, 'cron', id='sunmodel', hour=0, minute=15, timezone=MASTER.location['timezone'],name='sunrise_sunset_values')
         scheduler.add_job(
             delete_logs,
             trigger='interval',
@@ -114,7 +120,7 @@ def updater_start():
             name="Delete logs after every 24 hours",
             days=1,
             next_run_time=datetime.datetime.combine(datetime.date.today() + timedelta(days=1),datetime.time(hour=1),tzinfo=get_current_timezone()),
-            timezone='Asia/Kolkata'
+            timezone=MASTER.location['timezone']
         )
         scheduler.add_job(
             update_energy_config_file,
@@ -123,7 +129,7 @@ def updater_start():
             name="Update energy saved after every 24 hours",
             days=1,
             next_run_time=datetime.datetime.combine(datetime.date.today() + timedelta(days=1),datetime.time(hour=8),tzinfo=get_current_timezone()),
-            timezone='Asia/Kolkata'
+            timezone=MASTER.location['timezone']
         )
         if MASTER.Telemetry is True:
             scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values')
@@ -138,7 +144,7 @@ def updater_start():
                 minutes=MASTER.syncWithAutoInterval,
                 id='sync_to_auto',
                 name='sync_every_half_hour',
-                timezone='Asia/Kolkata'
+                timezone=MASTER.location['timezone']
             )
         else:
             scheduler.add_job(
@@ -148,7 +154,7 @@ def updater_start():
                 minutes=MASTER.syncWithAutoInterval,
                 id='sync_to_auto',
                 name='sync_every_half_hour',
-                timezone='Asia/Kolkata',
+                timezone=MASTER.location['timezone'],
                 next_run_time=None
             )
         scheduler.start()
@@ -176,7 +182,7 @@ def add_dim_jobs_on_startup():
                     id = slot.__str__(),
                     hour = slot.start.hour,
                     minute = slot.start.minute,
-                    timezone = 'Asia/Kolkata',
+                    timezone = MASTER.location['timezone'],
                     replace_existing=True,
                     name='dimming_job'
                 )
@@ -211,7 +217,7 @@ def sync_to_schedule(syncWithAutoInterval:bool,intensity=None,relay=None,run_tim
                 name="Retrying mains operation in auto mode",
                 replace_existing=True,
                 run_date=datetime.datetime.now() + timedelta(seconds=15),
-                timezone = 'Asia/Kolkata',
+                timezone = MASTER.location['timezone'],
             )
         while MASTER.scheduledJobStatus is True:
             continue
@@ -251,7 +257,7 @@ def sync_to_schedule(syncWithAutoInterval:bool,intensity=None,relay=None,run_tim
                             name="Retrying dim operation in auto mode",
                             replace_existing=True,
                             run_date=datetime.datetime.now() + timedelta(seconds=15),
-                            timezone = 'Asia/Kolkata',
+                            timezone = MASTER.location['timezone'],
                         )
                     while MASTER.scheduledJobStatus is True:
                         continue
@@ -287,7 +293,7 @@ def sync_to_schedule(syncWithAutoInterval:bool,intensity=None,relay=None,run_tim
                             name="Retrying dim operation in auto mode",
                             replace_existing=True,
                             run_date=datetime.datetime.now() + timedelta(seconds=15),
-                            timezone = 'Asia/Kolkata',
+                            timezone = MASTER.location['timezone'],
                         )
                     while MASTER.scheduledJobStatus is True:
                         continue
@@ -322,7 +328,7 @@ def sync_to_schedule(syncWithAutoInterval:bool,intensity=None,relay=None,run_tim
                 name="Retrying mains operation in auto mode",
                 replace_existing=True,
                 run_date=datetime.datetime.now() + timedelta(seconds=15),
-                timezone = 'Asia/Kolkata',
+                timezone = MASTER.location['timezone'],
             )
             while MASTER.scheduledJobStatus is True:
                 continue
@@ -366,7 +372,7 @@ def add_sync_jobs():
                         id = "sync_sunset",
                         hour = slot.start.hour,
                         minute = slot.start.minute,
-                        timezone = 'Asia/Kolkata',
+                        timezone = MASTER.location['timezone'],
                         replace_existing=True,
                         name='sync_to_schedule'
             )
@@ -382,7 +388,7 @@ def add_sync_jobs():
                         id = id,
                         hour = slot.start.hour,
                         minute = slot.start.minute,
-                        timezone = 'Asia/Kolkata',
+                        timezone = MASTER.location['timezone'],
                         replace_existing=True,
                         name='sync_to_schedule'
                     )
@@ -397,7 +403,7 @@ def add_sync_jobs():
                         id = "sync_sunrise",
                         hour = slot.end.hour,
                         minute = slot.end.minute,
-                        timezone = 'Asia/Kolkata',
+                        timezone = MASTER.location['timezone'],
                         replace_existing=True,
                         name='sync_to_schedule'
                     )

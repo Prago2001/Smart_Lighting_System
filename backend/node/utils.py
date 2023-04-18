@@ -3,6 +3,9 @@ from .models import Energy
 from datetime import timedelta
 import datetime
 from django.utils.timezone import get_current_timezone
+import pytz
+import requests
+from django.utils import timezone
 try:
     from .Coordinator import MASTER
 except Exception as e:
@@ -126,4 +129,47 @@ def calculate_power(intensity,mains):
 
         return power
 
+def get_ip():
+    try:
+        response = requests.get('https://api64.ipify.org?format=json').json()
+    except requests.exceptions.RequestException as e:
+        print("Error in fetching ip address\n",e)
+        return None
+    else:
+        return response["ip"]
+
+def get_location():
+    ip = get_ip()
+    if ip is not None:
+        try:
+            response = requests.get('http://ipinfo.io/json').json()
+        except requests.exceptions.RequestException as e:
+            print("Error in fetching location details\n", e)
+        else:
+            print(response)
+            MASTER.location["ip"] = ip
+            if "city" in response and "timezone" in response and "loc" in response:
+                MASTER.location["city"] = response.get("city")
+                MASTER.location["region"] = response.get("region")
+                MASTER.location["timezone"] = response.get("timezone")
+                lat, long = response.get('loc').split(",")
+                MASTER.location["latitude"] = float(lat)
+                MASTER.location["longitude"] = float(long)
+                print(MASTER.location)
+            try:
+                timezone.activate(pytz.timezone(MASTER.location['timezone']))
+            except Exception as e:
+                print("Unable to set timezone")
+
+def get_package_info():
+    try:
+        request = requests.get('https://api.github.com/repos/Prago2001/Smart_Lighting_System/releases/latest').json()
+    except requests.exceptions.RequestException as e:
+        print("Unable to fetch verison of package")
+        return None
+    else:
+        version = request.get('tag_name')
+        release_date = request.get('published_at')
+        release_date = datetime.datetime.strptime(release_date,"%Y-%m-%dT%H:%M:%SZ")
+        return (release_date.strftime("%-d %B %Y"),version)
 

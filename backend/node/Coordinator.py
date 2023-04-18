@@ -151,6 +151,14 @@ class Coordinator(metaclass=Singleton):
         self.syncWithAutoInterval = 30
         self.number_of_nodes = 0
         self.energy_saved = 0
+        self.location = {
+            "ip":"0.0.0.0",
+            "city":"Pune", 
+            "region":"India", 
+            "timezone":"Asia/Kolkata", 
+            "latitude":18.6452489, 
+            "longitude":73.9231856378539
+        }
         
 
     def discover_nodes(self) -> List[Remote]:
