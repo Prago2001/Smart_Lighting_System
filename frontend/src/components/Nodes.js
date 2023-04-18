@@ -229,15 +229,7 @@ const Nodes = () => {
       .then((res) => {
         localStorage.setItem('area_name',JSON.stringify(res.data.area_name));
       })
-
-    axios.get(url + "getSchedule/").then((res) => {
-      console.log(res);
-      setSun({ sunrise: res.data.sunrise, sunset: res.data.sunset });
-      setAutoSchedule(res.data.schedule);
-      localStorage.setItem('sunrise',JSON.stringify(res.data.sunrise_ts));
-      localStorage.setItem('sunset',JSON.stringify(res.data.sunset_ts));
-    })
-    .catch((error) => console.log(error));
+      .catch((error) => console.log(error));
   }, []);
 
   const handleButtonClick = () => {

@@ -75,7 +75,9 @@ def fetchSunModel() :
     if MASTER.Schedule is True:
         scheduler.add_job(
                             sync_to_schedule,
-                            kwargs={'syncWithAutoInterval' : False},
+                            kwargs={'syncWithAutoInterval' : False,
+                                    'relay':False,
+                                    'run_time':MASTER.sunrise_timestamp},
                             trigger='cron',
                             id = "sync_sunrise",
                             hour = s["sunrise"].hour,
@@ -87,7 +89,9 @@ def fetchSunModel() :
         # Changing scheduled job at sunset
         scheduler.add_job(
                             sync_to_schedule,
-                            kwargs={'syncWithAutoInterval' : False},
+                            kwargs={'syncWithAutoInterval' : False,
+                                    'relay':True,
+                                    'run_time':MASTER.sunset_timestamp},
                             trigger='cron',
                             id = "sync_sunset",
                             hour = s["sunset"].hour,
@@ -181,7 +185,7 @@ def add_dim_jobs_on_startup():
     
 
 
-def sync_to_schedule(syncWithAutoInterval:bool):
+def sync_to_schedule(syncWithAutoInterval:bool,intensity=None,relay=None,run_time=None):
     current_time = datetime.datetime.now().strftime("%H:%M")
     sunset = MASTER.SunSet
     sunrise = MASTER.SunRise
@@ -355,7 +359,9 @@ def add_sync_jobs():
         if slot.start.strftime("%H:%M") == MASTER.SunSet:
             scheduler.add_job(
                         sync_to_schedule,
-                        kwargs={'syncWithAutoInterval' : False},
+                        kwargs={'syncWithAutoInterval' : False,
+                                'relay':True,
+                                'run_time':MASTER.sunset_timestamp},
                         trigger='cron',
                         id = "sync_sunset",
                         hour = slot.start.hour,
@@ -368,7 +374,10 @@ def add_sync_jobs():
             id = "sync_" + slot.__str__()        
             scheduler.add_job(
                         sync_to_schedule,
-                        kwargs={'syncWithAutoInterval' : False},
+                        kwargs={'syncWithAutoInterval' : False,
+                                'relay':True,
+                                'intensity':slot.intensity,
+                                'run_time':slot.start},
                         trigger='cron',
                         id = id,
                         hour = slot.start.hour,
@@ -381,7 +390,9 @@ def add_sync_jobs():
         if slot.end.strftime("%H:%M") == MASTER.SunRise:
             scheduler.add_job(
                         sync_to_schedule,
-                        kwargs={'syncWithAutoInterval' : False},
+                        kwargs={'syncWithAutoInterval' : False,
+                                'relay':False,
+                                'run_time':MASTER.sunrise_timestamp},
                         trigger='cron',
                         id = "sync_sunrise",
                         hour = slot.end.hour,

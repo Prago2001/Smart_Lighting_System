@@ -55,6 +55,7 @@ def update_energy_config_file():
                 if object.saved is not None:
                     total += object.saved
             data['energy_saved'] += total
+            data['energy_saved'] = round(data['energy_saved'],2)
             MASTER.energy_saved = data['energy_saved']
             file.close()
         with open("config.json","w") as file:
@@ -97,13 +98,15 @@ def write_end_time_energy():
             duration = energy.end_time - energy.start_time
             duration_in_hours = duration.total_seconds() / 3600
 
-            energy.consumption = MASTER.number_of_nodes * calculate_power(energy.intensity,energy.mains) * duration_in_hours
+            energy.consumption = round(MASTER.number_of_nodes * calculate_power(energy.intensity,energy.mains) * duration_in_hours, 2)
 
-            max_energy = MASTER.number_of_nodes * 50 * CURRENT_AT_100 * duration_in_hours / 1000
+            max_energy = round(MASTER.number_of_nodes * 50 * CURRENT_AT_100 * duration_in_hours / 1000,2)
 
-            energy.saved = max_energy - energy.consumption
+            energy.saved = round(max_energy - energy.consumption,2)
+            
         energy.save()
-        print(f"Energy Consumed:{energy.consumption}, Max Energy: {max_energy}")
+        print(f"Energy Saved: {energy.saved}")
+        
 
 def calculate_power(intensity,mains):
     if mains is False:

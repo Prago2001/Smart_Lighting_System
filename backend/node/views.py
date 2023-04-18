@@ -817,3 +817,52 @@ def sync_with_auto_interval(request):
         scheduler.print_jobs()
         write_config_file()
         return Response({'message':'Success'})
+
+@api_view(["GET"])
+def information(request):
+    if request.method == "GET":
+        data = {}
+        data['active_nodes'] = Slave.objects.filter(is_active=True).count()
+        data['total_nodes'] = Slave.objects.count()
+
+        node = Slave.objects.all().order_by('-is_active').first()
+
+        if node is None:
+            # To handle all deleted nodes
+            data['relay'] = False
+            data['intensity'] = 25
+        else:
+            data['relay'] = node.mains_val
+            data['intensity'] = node.dim_val
+        
+        data['sunrise_ts'] = MASTER.sunrise_timestamp
+        data['sunset_ts'] = MASTER.sunset_timestamp
+
+        data['sunrise'] = MASTER.sunrise_timestamp.strftime("%I:%M %p")
+        data['sunset'] = MASTER.sunset_timestamp.strftime("%I:%M %p")
+
+        if MASTER.Schedule is False:
+            data['schedule'] = "Schedules are disabled"
+            data['schedule_status'] = False
+        else:
+            job:Job
+            for job in scheduler.get_jobs():
+                if job.name == 'sync_to_schedule':
+                    param = job.kwargs
+                    if job.id == "sync_sunrise":
+                        data['schedule'] = "Switching OFF lights at Sunrise"
+                        data['schedule_status'] = "sunrise"
+                    elif job.id == "sync_sunset":
+                        data['schedule'] = "Switching ON lights at Sunset"
+                        data['schedule_status'] = 'sunset'
+                    else:
+                        intensity = param['intensity']
+                        time = param['run_time'].strftime("%I:%M %p")
+                        data['schedule'] = f"Dimming lights to {intensity}%  intensity at {time}"
+                        data['schedule_status'] = 'dim'
+                    break
+        data['energy_saved'] = round(MASTER.energy_saved,2)
+        return Response(data)
+        
+        
+        
