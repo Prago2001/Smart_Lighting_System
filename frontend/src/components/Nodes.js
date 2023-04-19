@@ -28,6 +28,7 @@ import DisplayLogs from "./Logs/DisplayLogs";
 import ListOfAllSchedules from "./Schedules/ListOfSchedules";
 import DisplaySettings from "./Settings/DisplaySettings";
 import Home from "./Home/Home";
+import Status from "./Status";
 
 
 const Nodes = () => {
@@ -44,55 +45,36 @@ const Nodes = () => {
   const [loading, setLoading] = useState(false);
   // loadingOnOff: set true on pressing All On/Off button
   const [loadingOnOff, setLoadingOnOff] = useState(false);
-  // loadingTelemetry: set true on pressing Telemetry button
-  const [loadingTelemetry, setLoadingTelemetry] = useState(false);
   const [syncloading, setSyncloading] = useState(false);
-  const [applyloading, setApplyloading] = useState(false);
   const [tab, setTab] = useState(tabVal);
-  const [sun, setSun] = useState({ sunrise: 0, sunset: 0 });
-  const [autoSchedule, setAutoSchedule] = useState([]);
   // pointerEvent: set true to make all clickable things unclickable. 
   const [pointerEvent, setPointerEvent] = useState(false);
-  const [telemetryStatus, setTelemetryStatus] = useState(true);
   const [scheduleStatus, setScheduleStatus] = useState(true);
   // AlerDialog open or close?
-  const [open, setOpen] = useState(false);
   const [displaySuccessTab,setDisplaySuccessTab] = useState(false);
   const [retryAlert,setRetryAlert] = useState(false);
   const [retryNodes,setRetryNodes] = useState([]);
   const [displayAlertTab,setDisplayAlertTab] = useState(false);
   const [failedNodes,setFailedNodes] = useState([]);
-  const [logs,setLogs] = useState([]);
+  const [status,setStatus] = useState(false);
+  const [operation,setOperation] = useState('');
+  const [success,setSuccess] = useState(false);
+
+
 
   const handleChangeTab = (event, newValue) => {
     setTab(newValue);
     if(newValue == 1)
     {
       axios
-        .get(url + "toggle/", 
-        // {
-        //   params: {
-        //     isGlobal: true,
-        //     status: global.globalStatus ? "on" : "off",
-        //   },
-        // }
-        )
+        .get(url + "toggle/")
         .then((res) => {
-          // console.log(res.data.relay)
-          // setGlobalToggle(global.globalStatus);
           setGlobalToggle(res.data.relay);
         });
       axios
-        .get(url + "dimming/", 
-        // {
-          // params: { 
-          //   isGlobal: true, value: global.globalValue },
-        // }
-        )
+        .get(url + "dimming/")
         .then((res) => {
-          // set current value
           setGlobalDim(res.data.intensity);
-          // console.log(nodes);
         });
       axios.get(url + "getNodes/").then((res) => {
         setNodes(res.data.nodes);
@@ -121,24 +103,15 @@ const Nodes = () => {
     },
   ];
 
-  // const buttonSx = {
-  //   ...(loading && {
-  //     bgcolor: green[700],
-  //     "&:hover": {
-  //       bgcolor: green[900],
-  //     },
-  //   }),
-  // };
 
   const handleChange = (event, newValue) => {
 
     if (newValue !== global.globalValue) {
-      // current dimming value
-      console.log(newValue);
       setPointerEvent(true);
       setLoadingOnOff(true);
-      setDisplayAlertTab(false);
-      setDisplaySuccessTab(false);
+      setStatus(false);
+      setOperation('dim');
+      setFailedNodes([]);
       axios
         .put(url + "dimming/", {
           params: { 
@@ -159,10 +132,12 @@ const Nodes = () => {
               setRetryAlert(false);
               if(res.data.operation == false){
                 setFailedNodes(res.data.nodes);
-                setDisplayAlertTab(true);
+                setSuccess(false);
+                setStatus(true);
               }
               else{
-                setDisplaySuccessTab(true);
+                setSuccess(true);
+                setStatus(true);
               }
               axios.get(url + "getNodes/").then((res) => {
                 setNodes(res.data.nodes);
@@ -171,10 +146,11 @@ const Nodes = () => {
             })
           }
           else{
-            setDisplaySuccessTab(true);
-            axios.get(url + "getNodes/").then((res) => {
-              setNodes(res.data.nodes);
-            });
+              setSuccess(true);
+              setStatus(true);
+              axios.get(url + "getNodes/").then((res) => {
+                setNodes(res.data.nodes);
+              });
           }
         });
       
@@ -183,13 +159,6 @@ const Nodes = () => {
   
 
   useEffect(() => {
-    // axios
-    //   .get(url + "setTelemetry/",)
-    //   .then((res) => {
-    //     console.log("useEffect of setTelemetry");
-    //     setTelemetryStatus(res.data.status);
-    //   })
-    //   .catch((error) => console.log(error));
     if (global.isGlobal === true) {
       axios
         .get(url + "toggle/")
@@ -219,11 +188,6 @@ const Nodes = () => {
   }, []);
 
   useEffect(() => {
-    // axios.get(url + "activateSchedule/")
-    // .then((res) => {
-    //   setScheduleStatus(res.data.status);
-    // })
-    // .catch((error) => console.log(error));
     axios
       .get(url + "areaName/")
       .then((res) => {
@@ -235,10 +199,18 @@ const Nodes = () => {
   const handleButtonClick = () => {
     if (!loading) {
       setLoading(true);
-      axios.get(url + "discover/").then((res) => {
+      setStatus(false);
+      setOperation('discover');
+      axios.get(url + "discover/",{timeout:60000}).then((res) => {
         setLoading(false);
         setNodes(res.data.nodes);
-      });
+        setSuccess(true);
+        setStatus(true);
+      }).catch((error) => {
+        setSuccess(false);
+        setStatus(true);
+        setLoading(false);
+      })
     }
   };
 
@@ -380,7 +352,10 @@ const Nodes = () => {
       
         
 
-      <Box className="p-6 m-4 ">
+      <Box className="p-6 m-4 mt-0 pt-0">
+        <div class="flex justify-center items-center bg-gray-200 p-6 mb-4 rounded-2xl shadow-inner">
+          <span class="block text-center text-4xl font-bold uppercase text-black">{JSON.parse(localStorage.getItem("area_name"))}</span>
+        </div>
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs
             value={tab}
@@ -513,8 +488,9 @@ const Nodes = () => {
                 onClick={() => {
                   setPointerEvent(true);
                   setLoadingOnOff(true);
-                  setDisplayAlertTab(false);
-                  setDisplaySuccessTab(false);
+                  setStatus(false);
+                  setOperation('toggle');
+                  setFailedNodes([]);
                   axios
                     .put(url + "toggle/", {
                       params: {
@@ -539,10 +515,12 @@ const Nodes = () => {
                           // console.log('Retry job done...')
                           if(res.data.operation == false){
                             setFailedNodes(res.data.nodes);
-                            setDisplayAlertTab(true);
+                            setSuccess(false);
+                            setStatus(true);
                           }
                           else{
-                            setDisplaySuccessTab(true);
+                            setSuccess(true);
+                            setStatus(true);
                           }
                           axios.get(url + "getNodes/").then((res) => {
                             setNodes(res.data.nodes);
@@ -551,7 +529,8 @@ const Nodes = () => {
                         })
                       }
                       else{
-                        setDisplaySuccessTab(true);
+                        setSuccess(true);
+                        setStatus(true);
                         axios.get(url + "getNodes/").then((res) => {
                           setNodes(res.data.nodes);
                         });
@@ -594,10 +573,10 @@ const Nodes = () => {
                 disabled={syncloading || !scheduleStatus || !global.isGlobal}
                 onClick={() => {
                   setSyncloading(true);
-                  setDisplayAlertTab(false);
-                  setDisplaySuccessTab(false);
+                  setStatus(false);
+                  setOperation('sync');
                   setPointerEvent(true);
-                  
+                  setFailedNodes([]);
                   axios.get(url + "sync/").then((res) => {
                     
                     axios.get(url + "getRetryJobStatus/",{
@@ -606,10 +585,14 @@ const Nodes = () => {
                       // console.log('Retry job done...')
                         if(res.data.operation == false){
                           setFailedNodes(res.data.nodes);
-                          setDisplayAlertTab(true);
+                          setSuccess(false);
+                          setStatus(true);
+                          
                         }
                         else{
-                          setDisplaySuccessTab(true);
+                          setSuccess(true);
+                          setStatus(true);
+                          
                         }
                         setSyncloading(false);
                         setPointerEvent(false);
@@ -652,65 +635,17 @@ const Nodes = () => {
                 )}
               </Button>
             </div>
-
-            {/* <div className="flex  col-span-2 items-centers justify-end">
-              <Button
-                size='small'
-                disabled={loadingTelemetry}
-                onClick={() => {
-                  setPointerEvent(true);
-                  setLoadingTelemetry(true);
-
-                  axios
-                    .put(url + "setTelemetry/", {
-                      params: {
-                        status: !telemetryStatus,
-                      },
-                    })
-                    .then((res) => {
-                      setTelemetryStatus(!telemetryStatus);
-                      setPointerEvent(false);
-                      setLoadingTelemetry(false);
-                    });
-
-                  // console.log("Hi this is telemetry button")
-                  // setPointerEvent(false);
-                  // setLoadingTelemetry(false);
-                }}
-                color={telemetryStatus ? "success" : "error"}
-                variant={telemetryStatus ? "outlined" : "contained"}
-              >
-                Switch {telemetryStatus ? "OFF" : "ON"} Telemetry 
-                {loadingTelemetry && (
-                  <CircularProgress
-                    color="success"
-                    size={24}
-                    sx={{
-                      position: "absolute",
-                      top: "50%",
-                      left: "50%",
-                      marginTop: "-12px",
-                      marginLeft: "-12px",
-                    }}
-                  />
-                )}
-              </Button>
-            </div> */}
           </div>
-          <Stack spacing={2}>
-            {
-              nodes.map((item) => (
-                <NodeItem item={item} />
-              ))
-            }
-          </Stack>
-          {/* <ul className="flex items-center justify-center grid grid-flow-col auto-cols-max gap-4 p-6">
-            {nodes.map((item) => (
-              <li key={item.id}>
-                <NodeItem item={item} />
-              </li>
-            ))}
-          </ul> */}
+          <div class="overflow-y-auto snap-y">
+            <Stack spacing={2}>
+              {
+                nodes.map((item) => (
+                  <NodeItem item={item} />
+                ))
+              }
+            </Stack>
+          </div>
+          
         </TabPanel>
         <TabPanel value={tab} index={2}>
           <ListOfAllSchedules />
@@ -721,6 +656,13 @@ const Nodes = () => {
         <TabPanel value={tab} index={4}>
           <DisplaySettings/>
         </TabPanel>
+        {status && <Status 
+          open={true}
+          close={() => setStatus(false)}
+          operation={operation}
+          msg={failedNodes}
+          success={success}
+        />}
       </Box>
       {/* <Box sx={{ width: "30%" }}>
         <Alert className="m-8" severity="warning">

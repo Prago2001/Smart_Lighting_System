@@ -60,7 +60,7 @@ def retry_dim(nodes,dim_val):
     MASTER.scheduledJobStatus = False
 
 def perform_dimming(node_name,id,dim_value):
-    sleep(2)
+    sleep(1.5)
     print(f"Starting thread in {node_name}")
     counter = 0
     while counter < 4:
@@ -69,8 +69,12 @@ def perform_dimming(node_name,id,dim_value):
             remote = MASTER.get_node(node_name)
             if remote is not None:
                 remote.set_dim_value(dim_value)
-                print(f"Switching {dim_value} for {node_name}")
-                return (True,id)
+                sleep(1)
+                if remote.get_dim_value() == dim_value:
+                    print(f"Switching {dim_value} for {node_name}")
+                    return (True,id)
+                else:
+                    continue
         except Exception as e:
             pass
         counter += 1
@@ -83,7 +87,7 @@ def perform_dimming(node_name,id,dim_value):
     return (False,id)
 
 def perform_toggle(node_name,id,mains_val):
-    sleep(2)
+    sleep(1.5)
     print(f"Starting thread in {node_name}")
     counter = 0
     while counter < 4:
@@ -91,8 +95,12 @@ def perform_toggle(node_name,id,mains_val):
             remote = MASTER.get_node(node_name)
             if remote is not None:
                 remote.set_mains_value(mains_val)
-                print(f"Toggling to {mains_val} for {node_name}")
-                return (True,id)
+                sleep(1)
+                if remote.get_mains_value() == mains_val:
+                    print(f"Toggling to {mains_val} for {node_name}")
+                    return (True,id)
+                else:
+                    continue
         except Exception as e:
             pass
         counter += 1
@@ -164,18 +172,22 @@ class Coordinator(metaclass=Singleton):
     def discover_nodes(self) -> List[Remote]:
         self.nodes : List[Remote] = []
         try:
-            self.network.start_discovery_process()
+            self.network.set_deep_discovery_options()
+            self.network.start_discovery_process(deep=True, n_deep_scans=1)
             while self.network.is_discovery_running():
-                sleep(3)
+                sleep(2)
             for node in self.network.get_devices():
                 print(node)
                 try:
                     self.nodes.append(Remote(node))
                 except:
                     pass
+        except RuntimeError as rte:
+            print(f"Runtime error in discover_nodes: {rte}")
         except Exception as e:
             print(f"Error in discover_nodes: {e}")
             pass
+        
         self.number_of_nodes = len(self.nodes)
         return self.nodes
     

@@ -13,7 +13,8 @@ from .Coordinator import perform_dimming,perform_toggle,retry_mains, retry_dim
 from apscheduler.job import Job
 from django.utils.timezone import get_current_timezone
 import random
-from .utils import read_config_file,write_config_file,write_end_time_energy,write_start_time_energy,update_energy_config_file, get_package_info
+from .utils import read_config_file,write_config_file,write_end_time_energy,write_start_time_energy,update_energy_config_file, get_package_info,restart_server
+from threading import Timer
 try:
     from .Coordinator import MASTER
 except Exception as e:
@@ -882,3 +883,14 @@ def system_information(request):
         data["lon"] = MASTER.location["longitude"]
 
         return Response(data)
+
+@api_view(["POST"])
+def restart(request):
+    if request.method == "POST":
+        body = request.body.decode('utf-8')
+        body = json.loads(body)
+        status = body['status']
+
+        t = Timer(5,restart_server)
+        t.start()
+        return Response({"message":"Success"})

@@ -12,7 +12,7 @@ import EnableDisableTelemetry from "./EnableDisableTelemetry";
 import SyncWithAutoInterval from "./SyncWithAutoInterval";
 import SystemInfo from "./SystemInfo";
 import DeleteLogs from "./DeleteLogs";
-
+import RestartServer from "./RestartServer";
 export default function DisplaySettings(){
     
     const [currentSetting,setSetting] = useState("default");
@@ -22,7 +22,9 @@ export default function DisplaySettings(){
         "Enable/Disable Telemetry",
         "Sync with Auto Interval",
         "Delete Logs",
+        "Restart Server",
         "System Info",
+        
     ];
     return(
         <Grid container spacing={1} sx={{height:'100%',m:4,p:4,ml:-4,fontSize:20,mt:-4}}>
@@ -81,6 +83,12 @@ export default function DisplaySettings(){
                             <DeleteLogs />
                         )
                     }
+                    else if(currentSetting === "Restart Server"){
+                        return(
+                            <RestartServer />
+                        )
+                    }
+
                 })()}
             </Grid>
         </Grid>

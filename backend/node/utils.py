@@ -5,6 +5,7 @@ import datetime
 from django.utils.timezone import get_current_timezone
 import pytz
 import requests
+import subprocess
 from django.utils import timezone
 try:
     from .Coordinator import MASTER
@@ -173,3 +174,10 @@ def get_package_info():
         release_date = datetime.datetime.strptime(release_date,"%Y-%m-%dT%H:%M:%SZ")
         return (release_date.strftime("%-d %B %Y"),version)
 
+def restart_server():
+    restart_service = "sudo systemctl restart backend.service".split()
+    process = subprocess.run(
+        restart_service,
+        stdout=subprocess.PIPE,
+        encoding="ascii"
+    )

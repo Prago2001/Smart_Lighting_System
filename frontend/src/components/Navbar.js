@@ -47,7 +47,7 @@ function Navbar({ fixed }) {
           <span className="ml-2">Light It Up!</span>
         </div>
         <div class="flex justify-center items-center col-span-2 col-start-3">
-          <span class="text-4xl uppercase">{JSON.parse(localStorage.getItem("area_name"))}</span>
+          <span class="text-4xl uppercase"></span>
         </div>
         <div class="flex justify-center items-center col-span-2 col-start-5">
           <Notifications
