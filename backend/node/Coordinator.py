@@ -172,10 +172,9 @@ class Coordinator(metaclass=Singleton):
     def discover_nodes(self) -> List[Remote]:
         self.nodes : List[Remote] = []
         try:
-            self.network.set_deep_discovery_options()
-            self.network.start_discovery_process(deep=True, n_deep_scans=1)
+            self.network.start_discovery_process()
             while self.network.is_discovery_running():
-                sleep(2)
+                sleep(3)
             for node in self.network.get_devices():
                 print(node)
                 try:
