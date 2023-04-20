@@ -14,12 +14,15 @@ class NodeConfig(AppConfig):
             from .Scheduler import fetchSunModel,updater_start,add_dim_jobs_on_startup,sync_to_schedule
             from .Scheduler import add_sync_jobs
             from .views import changeSchedule
-            from .utils import read_config_file, write_config_file, get_location
+            from .utils import read_config_file, update_energy_config_file, get_location
+            
             get_location()
+            read_config_file()
             # Slave.objects.all().delete()
             # This piece of code is to ensure that the last energy object
             # will get deleted as it will be having null values in 
             # end_time, consumption and saved
+            update_energy_config_file()
             last_energy_object = Energy.objects.last()
             if last_energy_object is not None:
                 last_energy_object.delete()
@@ -84,7 +87,7 @@ class NodeConfig(AppConfig):
                     print(Slot.objects.all())
                 current_schedule = default_schedule
 
-            read_config_file()
+            
 
             fetchSunModel()
             updater_start()

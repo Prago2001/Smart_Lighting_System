@@ -30,6 +30,9 @@ def read_config_file():
             MASTER.syncWithAutoInterval = data["sync_with_auto_interval"]
             MASTER.energy_saved = data['energy_saved']
             file.close()
+    except FileNotFoundError as fnf:
+        write_config_file()
+        print("Config file not found. Creating config.json")
     except Exception as e:
         print("Error in reading config file",e)
 
