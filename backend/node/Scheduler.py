@@ -8,6 +8,10 @@ from .Coordinator import get_curr_temp_val_async,retry_dim,retry_mains
 import concurrent.futures
 from django.utils.timezone import get_current_timezone
 from apscheduler.job import Job
+from apscheduler.schedulers.background import BackgroundScheduler
+from django_apscheduler.jobstores import DjangoJobStore, register_events
+from django_apscheduler.models import DjangoJobExecution
+
 
 try:
     from .Coordinator import MASTER
@@ -25,7 +29,7 @@ function_mapping = {
     'make_all_off':MASTER.make_all_off,
 }
 
-scheduler = BackgroundScheduler()
+
 
 # in startup :
 
@@ -102,7 +106,7 @@ def fetchSunModel() :
 
 def updater_start():
     try:
-        scheduler.add_job(fetchSunModel, 'cron', id='sunmodel', hour=0, minute=15, timezone='Asia/Kolkata',name='sunrise_sunset_values')
+        scheduler.add_job(fetchSunModel, 'cron', id='sunmodel', hour=0, minute=15, timezone='Asia/Kolkata',name='sunrise_sunset_values',replace_existing=True)
         scheduler.add_job(
             delete_logs,
             trigger='interval',
@@ -110,12 +114,13 @@ def updater_start():
             name="Delete logs after every 24 hours",
             days=1,
             next_run_time=datetime.datetime.combine(datetime.date.today() + timedelta(days=1),datetime.time(hour=1),tzinfo=get_current_timezone()),
+            replace_existing=True,
             timezone='Asia/Kolkata'
         )
         if MASTER.Telemetry is True:
-            scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values')
+            scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values',replace_existing=True)
         else:
-            scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values',next_run_time=None)
+            scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values',next_run_time=None,replace_existing=True)
         add_sync_jobs()
         if MASTER.syncWithAuto is True:
             scheduler.add_job(
@@ -125,7 +130,8 @@ def updater_start():
                 minutes=MASTER.syncWithAutoInterval,
                 id='sync_to_auto',
                 name='sync_every_half_hour',
-                timezone='Asia/Kolkata'
+                timezone='Asia/Kolkata',
+                replace_existing=True
             )
         else:
             scheduler.add_job(
@@ -136,7 +142,8 @@ def updater_start():
                 id='sync_to_auto',
                 name='sync_every_half_hour',
                 timezone='Asia/Kolkata',
-                next_run_time=None
+                next_run_time=None,
+                replace_existing=True
             )
         scheduler.start()
         if MASTER.Schedule is False:
@@ -401,3 +408,7 @@ def delete_logs():
                 message = "Logs, current and temperature data deleted successfully.",
                 timestamp=datetime.datetime.now(tz=get_current_timezone())
         )
+
+scheduler = BackgroundScheduler()
+scheduler.add_jobstore(DjangoJobStore(), "default")
+register_events(scheduler)

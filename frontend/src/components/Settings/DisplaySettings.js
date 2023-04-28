@@ -12,6 +12,7 @@ import EnableDisableTelemetry from "./EnableDisableTelemetry";
 import SyncWithAutoInterval from "./SyncWithAutoInterval";
 import SystemInfo from "./SystemInfo";
 import DeleteLogs from "./DeleteLogs";
+import RestartServer from "./RestartServer";
 
 export default function DisplaySettings(){
     
@@ -22,6 +23,7 @@ export default function DisplaySettings(){
         "Enable/Disable Telemetry",
         "Sync with Auto Interval",
         "Delete Logs",
+        "Restart Server",
         "System Info",
     ];
     return(
@@ -79,6 +81,11 @@ export default function DisplaySettings(){
                     else if(currentSetting === "Delete Logs"){
                         return(
                             <DeleteLogs />
+                        )
+                    }
+                    else if(currentSetting === "Restart Server"){
+                        return(
+                            <RestartServer/>
                         )
                     }
                 })()}

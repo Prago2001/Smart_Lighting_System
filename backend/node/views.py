@@ -13,7 +13,9 @@ from .Coordinator import perform_dimming,perform_toggle,retry_mains, retry_dim
 from apscheduler.job import Job
 from django.utils.timezone import get_current_timezone
 import random
-from .utils import read_config_file,write_config_file
+from .utils import read_config_file,write_config_file, restart_server
+from threading import Timer
+
 try:
     from .Coordinator import MASTER
 except Exception as e:
@@ -802,3 +804,15 @@ def sync_with_auto_interval(request):
         scheduler.print_jobs()
         write_config_file()
         return Response({'message':'Success'})
+
+
+@api_view(["POST"])
+def restart(request):
+    if request.method == "POST":
+        body = request.body.decode('utf-8')
+        body = json.loads(body)
+        status = body['status']
+
+        t = Timer(5,restart_server)
+        t.start()
+        return Response({"message":"Success"})

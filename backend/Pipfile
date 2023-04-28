@@ -17,6 +17,7 @@ apscheduler = "*"
 astral = "*"
 python-dateutil = "*"
 django-extensions = "*"
+django-apscheduler = "*"
 
 [requires]
 python_version = "3.8"

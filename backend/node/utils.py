@@ -1,4 +1,6 @@
 import json
+import subprocess
+
 try:
     from .Coordinator import MASTER
 except Exception as e:
@@ -15,6 +17,10 @@ def read_config_file():
             MASTER.areaName = data["area_name"]
             MASTER.syncWithAuto = data["sync_with_auto"]
             MASTER.syncWithAutoInterval = data["sync_with_auto_interval"]
+    except FileNotFoundError as fnf:
+        print("config.json not found:\n",fnf)
+        write_config_file()
+
     except Exception as e:
         print("Error in reading config file",e)
 
@@ -31,4 +37,12 @@ def write_config_file():
             json.dump(data, file,sort_keys=True,indent=4)
     except Exception as e:
         print("Error in writing config file",e)
+
+def restart_server():
+    restart_service = "sudo systemctl restart backend.service".split()
+    process = subprocess.run(
+        restart_service,
+        stdout=subprocess.PIPE,
+        encoding="ascii"
+    )
     
