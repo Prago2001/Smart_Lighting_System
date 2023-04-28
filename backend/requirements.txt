@@ -4,6 +4,7 @@ asgiref==3.5.2; python_version >= '3.7'
 astral==3.2
 backports.zoneinfo==0.2.1; python_version < '3.9'
 digi-xbee==1.4.1
+django-apscheduler==0.6.2
 dj-database-url==1.1.0
 dj-email-url==1.0.6
 django-cache-url==3.4.4
