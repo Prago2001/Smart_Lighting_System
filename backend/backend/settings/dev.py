@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'django_extensions',
+    'django_apscheduler'
 ]
 
 MIDDLEWARE = [
@@ -133,3 +134,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
 ]
+APSCHEDULER_RUN_NOW_TIMEOUT = 300

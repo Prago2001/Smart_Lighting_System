@@ -9,6 +9,9 @@ import concurrent.futures
 from django.utils.timezone import get_current_timezone
 from apscheduler.job import Job
 from .utils import write_end_time_energy,write_start_time_energy,update_energy_config_file
+from apscheduler.schedulers.background import BackgroundScheduler
+from django_apscheduler.jobstores import DjangoJobStore, register_events
+from django_apscheduler.models import DjangoJobExecution
 try:
     from .Coordinator import MASTER
 except Exception as e:
@@ -25,7 +28,7 @@ function_mapping = {
     'make_all_off':MASTER.make_all_off,
 }
 
-scheduler = BackgroundScheduler()
+
 
 # in startup :
 
@@ -112,7 +115,7 @@ def fetchSunModel() :
 
 def updater_start():
     try:
-        scheduler.add_job(fetchSunModel, 'cron', id='sunmodel', hour=0, minute=15, timezone=MASTER.location['timezone'],name='sunrise_sunset_values')
+        scheduler.add_job(fetchSunModel, 'cron', id='sunmodel', hour=0, minute=15, timezone=MASTER.location['timezone'],name='sunrise_sunset_values',replace_existing=True)
         scheduler.add_job(
             delete_logs,
             trigger='interval',
@@ -120,7 +123,8 @@ def updater_start():
             name="Delete logs after every 24 hours",
             days=1,
             next_run_time=datetime.datetime.combine(datetime.date.today() + timedelta(days=1),datetime.time(hour=1),tzinfo=get_current_timezone()),
-            timezone=MASTER.location['timezone']
+            timezone=MASTER.location['timezone'],
+            replace_existing=True
         )
         scheduler.add_job(
             update_energy_config_file,
@@ -129,12 +133,13 @@ def updater_start():
             name="Update energy saved after every 24 hours",
             days=1,
             next_run_time=datetime.datetime.combine(datetime.date.today() + timedelta(days=1),datetime.time(hour=8),tzinfo=get_current_timezone()),
-            timezone=MASTER.location['timezone']
+            timezone=MASTER.location['timezone'],
+            replace_existing=True
         )
         if MASTER.Telemetry is True:
-            scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values')
+            scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values',replace_existing=True)
         else:
-            scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values',next_run_time=None)
+            scheduler.add_job(getInsValues, 'interval', seconds=120, id='inst_values',name='current_temperature_values',next_run_time=None,replace_existing=True)
         add_sync_jobs()
         if MASTER.syncWithAuto is True:
             scheduler.add_job(
@@ -144,7 +149,8 @@ def updater_start():
                 minutes=MASTER.syncWithAutoInterval,
                 id='sync_to_auto',
                 name='sync_every_half_hour',
-                timezone=MASTER.location['timezone']
+                timezone=MASTER.location['timezone'],
+                replace_existing=True
             )
         else:
             scheduler.add_job(
@@ -155,7 +161,8 @@ def updater_start():
                 id='sync_to_auto',
                 name='sync_every_half_hour',
                 timezone=MASTER.location['timezone'],
-                next_run_time=None
+                next_run_time=None,
+                replace_existing=True
             )
         scheduler.start()
         if MASTER.Schedule is False:
@@ -184,7 +191,7 @@ def add_dim_jobs_on_startup():
                     minute = slot.start.minute,
                     timezone = MASTER.location['timezone'],
                     replace_existing=True,
-                    name='dimming_job'
+                    name='dimming_job',
                 )
     except Exception as e:
         print(e)
@@ -432,3 +439,8 @@ def delete_logs():
                 message = "Logs, current and temperature data deleted successfully.",
                 timestamp=datetime.datetime.now(tz=get_current_timezone())
         )
+
+
+scheduler = BackgroundScheduler()
+scheduler.add_jobstore(DjangoJobStore(), "default")
+register_events(scheduler)

@@ -60,7 +60,7 @@ def retry_dim(nodes,dim_val):
     MASTER.scheduledJobStatus = False
 
 def perform_dimming(node_name,id,dim_value):
-    sleep(1.5)
+    sleep(0.5)
     print(f"Starting thread in {node_name}")
     counter = 0
     while counter < 4:
@@ -87,7 +87,7 @@ def perform_dimming(node_name,id,dim_value):
     return (False,id)
 
 def perform_toggle(node_name,id,mains_val):
-    sleep(1.5)
+    sleep(0.5)
     print(f"Starting thread in {node_name}")
     counter = 0
     while counter < 4:

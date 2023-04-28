@@ -15,6 +15,9 @@ class NodeConfig(AppConfig):
             from .Scheduler import add_sync_jobs
             from .views import changeSchedule
             from .utils import read_config_file, update_energy_config_file, get_location
+            from django_apscheduler.models import DjangoJob
+
+            DjangoJob.objects.all().delete()
             
             get_location()
             read_config_file()
