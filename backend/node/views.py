@@ -111,33 +111,20 @@ def toggle_mains(request):
         params = request_data['params']
         if 'isGlobal' in params and params['isGlobal'] is True:
             status = params['status']
-
+            failed_nodes = {}
             write_end_time_energy()
             if status == "on":
                 switch_mains_value = True
+                failed_nodes = MASTER.make_all_on()
                 node = Slave.objects.all().order_by('-is_active').first()
                 if node is not None:
                     write_start_time_energy(mains=True,intensity=node.dim_val)
             else:
                 switch_mains_value = False
+                failed_nodes = MASTER.make_all_off()
                 write_start_time_energy(mains=False,intensity=0)
 
-            
-            failed_nodes = {}
 
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                threads = [executor.submit(perform_toggle,node_name=node.name,id=node.unique_id,mains_val=switch_mains_value) for node in Slave.objects.all().order_by('is_active')]
-                for f in concurrent.futures.as_completed(threads):
-                    status, id = f.result()
-                    node = Slave.objects.get(unique_id=id)
-                    if status is True:
-                        node.is_active = True
-                        node.mains_val = switch_mains_value
-                    else:
-                        print(f"Unable to toggle {node.name}")
-                        node.is_active = False
-                        failed_nodes[node.name] = node.unique_id
-                    node.save()
             print(f"Time needed for execution {time.time() - start_time}")
             if len(failed_nodes) == 0:
                 return Response({"operation":True})
@@ -206,19 +193,8 @@ def dim_to(request):
 
             failed_nodes = {}
 
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                threads = [executor.submit(perform_dimming,node_name=node.name,id=node.unique_id,dim_value=dim_to_value) for node in Slave.objects.all().order_by('is_active')]
-                for f in concurrent.futures.as_completed(threads):
-                    status, id = f.result()
-                    node = Slave.objects.get(unique_id=id)
-                    if status is True:
-                        node.is_active = True
-                        node.dim_val = dim_to_value
-                    else:
-                        print(f"Unable to dim {node.name}")
-                        node.is_active = False
-                        failed_nodes[node.name] = node.unique_id
-                    node.save()
+            failed_nodes = MASTER.set_dim_value(dim_value=dim_to_value)
+
             print(f"Time needed for execution {time.time() - start_time}")
             if len(failed_nodes) == 0:
                 return Response({"operation":True})

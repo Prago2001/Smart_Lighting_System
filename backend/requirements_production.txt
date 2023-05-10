@@ -20,6 +20,7 @@ importlib-metadata==6.4.1 ; python_version < '3.10'
 markdown==3.4.3
 marshmallow==3.19.0 ; python_version >= '3.7'
 packaging==23.1 ; python_version >= '3.7'
+psycopg2-binary==2.9.6
 pyserial==3.5
 python-dateutil==2.8.2
 python-dotenv==1.0.0 ; python_version >= '3.8'

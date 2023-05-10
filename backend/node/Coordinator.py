@@ -199,54 +199,45 @@ class Coordinator(metaclass=Singleton):
     
     def make_all_on(self):
         failed_nodes = {}
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            threads = [executor.submit(perform_toggle,node_name=node.name,id=node.unique_id,mains_val=True) for node in Slave.objects.all().order_by('is_active')]
-            for f in concurrent.futures.as_completed(threads):
-                status, id = f.result()
-                node = Slave.objects.get(unique_id=id)
-                if status is True:
-                    node.is_active = True
-                    node.mains_val = True
-                else:
-                    print(f"Unable to toggle {node.name}")
-                    node.is_active = False
-                    failed_nodes[node.name] = node.unique_id
-                node.save()
+        for node in Slave.objects.all().order_by('is_active'):
+            status, id = perform_toggle(node_name=node.name,id=node.unique_id,mains_val=True)
+            if status is True:
+                node.is_active = True
+                node.mains_val = True
+            else:
+                print(f"Unable to toggle {node.name}")
+                node.is_active = False
+                failed_nodes[node.name] = node.unique_id
+            node.save()
         return failed_nodes
             
     
     def make_all_off(self):
         failed_nodes = {}
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            threads = [executor.submit(perform_toggle,node_name=node.name,id=node.unique_id,mains_val=False) for node in Slave.objects.all().order_by('is_active')]
-            for f in concurrent.futures.as_completed(threads):
-                status, id = f.result()
-                node = Slave.objects.get(unique_id=id)
-                if status is True:
-                    node.is_active = True
-                    node.mains_val = False
-                else:
-                    print(f"Unable to toggle {node.name}")
-                    node.is_active = False
-                    failed_nodes[node.name] = node.unique_id
-                node.save()
+        for node in Slave.objects.all().order_by('is_active'):
+            status, id = perform_toggle(node_name=node.name,id=node.unique_id,mains_val=False)
+            if status is True:
+                node.is_active = True
+                node.mains_val = False
+            else:
+                print(f"Unable to toggle {node.name}")
+                node.is_active = False
+                failed_nodes[node.name] = node.unique_id
+            node.save()
         return failed_nodes
     
     def set_dim_value(self,dim_value):
         failed_nodes = {}
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            threads = [executor.submit(perform_dimming,node_name=node.name,id=node.unique_id,dim_value=dim_value) for node in Slave.objects.all().order_by('is_active')]
-            for f in concurrent.futures.as_completed(threads):
-                status, id = f.result()
-                node = Slave.objects.get(unique_id=id)
-                if status is True:
-                    node.is_active = True
-                    node.dim_val = dim_value
-                else:
-                    print(f"Unable to dim {node.name}")
-                    node.is_active = False
-                    failed_nodes[node.name] = node.unique_id
-                node.save()
+        for node in Slave.objects.all().order_by('is_active'):
+            status, id = perform_dimming(node_name=node.name,id=node.unique_id,dim_value=dim_value)
+            if status is True:
+                node.is_active = True
+                node.dim_val = dim_value
+            else:
+                print(f"Unable to dim {node.name}")
+                node.is_active = False
+                failed_nodes[node.name] = node.unique_id
+            node.save()
         return failed_nodes
 
 MASTER = Coordinator()

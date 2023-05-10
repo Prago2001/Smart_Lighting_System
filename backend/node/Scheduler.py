@@ -33,21 +33,18 @@ function_mapping = {
 # in startup :
 
 def getInsValues():
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-        threads = [executor.submit(get_curr_temp_val_async,node_name=node.name,id=node.unique_id) for node in Slave.objects.all()]
-        for f in concurrent.futures.as_completed(threads):
-            id, status, temp, curr = f.result()
-            node = Slave.objects.get(unique_id=id)
-            if status is True:
-                CurrentMeasurement.objects.create(SlaveId = node,currentValue = curr)
-                TemperatureMeasurement.objects.create(SlaveId = node,temperatureValue = temp)
-                node.current = curr
-                node.temperature = temp
-                node.is_active = True
-                node.save()
-            else:
-                node.is_active = False
-                node.save()
+    for node in Slave.objects.all():
+        id, status, temp, curr = get_curr_temp_val_async(node_name=node.name,id=node.unique_id)
+        if status is True:
+            CurrentMeasurement.objects.create(SlaveId = node,currentValue = curr)
+            TemperatureMeasurement.objects.create(SlaveId = node,temperatureValue = temp)
+            node.current = curr
+            node.temperature = temp
+            node.is_active = True
+            node.save()
+        else:
+            node.is_active = False
+            node.save()
         
 
 def fetchSunModel() :
