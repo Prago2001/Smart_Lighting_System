@@ -9,9 +9,8 @@ import concurrent.futures
 from django.utils.timezone import get_current_timezone
 from apscheduler.job import Job
 from .utils import write_end_time_energy,write_start_time_energy,update_energy_config_file
-from apscheduler.schedulers.background import BackgroundScheduler
-from django_apscheduler.jobstores import DjangoJobStore, register_events
-from django_apscheduler.models import DjangoJobExecution
+
+
 try:
     from .Coordinator import MASTER
 except Exception as e:
@@ -28,7 +27,7 @@ function_mapping = {
     'make_all_off':MASTER.make_all_off,
 }
 
-
+scheduler = BackgroundScheduler()
 
 # in startup :
 
@@ -438,6 +437,3 @@ def delete_logs():
         )
 
 
-scheduler = BackgroundScheduler()
-scheduler.add_jobstore(DjangoJobStore(), "default")
-register_events(scheduler)
