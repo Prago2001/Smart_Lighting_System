@@ -10,8 +10,8 @@ export default function SystemInfo(){
                 System Information
             </Typography>
             <Typography variant="overline">
-                Version Number: 4.2 <br/>
-                Release Date: 27 March 2023
+                Version Number: 4.2.1 <br/>
+                Release Date: 11 May 2023
             </Typography>
         </div>
     )
