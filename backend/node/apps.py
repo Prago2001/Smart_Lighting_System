@@ -15,9 +15,7 @@ class NodeConfig(AppConfig):
             from .Scheduler import add_sync_jobs
             from .views import changeSchedule
             from .utils import read_config_file, write_config_file
-            from django_apscheduler.models import DjangoJob
 
-            DjangoJob.objects.all().delete()
             Slave.objects.all().delete()
             counter = Slave.objects.count()+1
             for node in MASTER.discover_nodes():

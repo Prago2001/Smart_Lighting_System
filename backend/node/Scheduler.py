@@ -8,9 +8,7 @@ from .Coordinator import get_curr_temp_val_async,retry_dim,retry_mains
 import concurrent.futures
 from django.utils.timezone import get_current_timezone
 from apscheduler.job import Job
-from apscheduler.schedulers.background import BackgroundScheduler
-from django_apscheduler.jobstores import DjangoJobStore, register_events
-from django_apscheduler.models import DjangoJobExecution
+
 
 
 try:
@@ -30,6 +28,7 @@ function_mapping = {
 }
 
 
+scheduler = BackgroundScheduler()
 
 # in startup :
 
@@ -407,6 +406,3 @@ def delete_logs():
                 timestamp=datetime.datetime.now(tz=get_current_timezone())
         )
 
-scheduler = BackgroundScheduler()
-scheduler.add_jobstore(DjangoJobStore(), "default")
-register_events(scheduler)
