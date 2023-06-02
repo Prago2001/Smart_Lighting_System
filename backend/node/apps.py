@@ -23,33 +23,41 @@ class NodeConfig(AppConfig):
             # will get deleted as it will be having null values in 
             # end_time, consumption and saved
             update_energy_config_file()
-            last_energy_object = Energy.objects.last()
-            if last_energy_object is not None:
-                last_energy_object.delete()
+            try:
+                last_energy_object = Energy.objects.last()
+                if last_energy_object is not None:
+                    last_energy_object.delete()
+            except Exception as e:
+                print(e)
             
             
-            counter = Slave.objects.count()+1
-            for node in MASTER.discover_nodes():
-                if not Slave.objects.filter(unique_id = node._64bit_addr).exists():
-                    slave = Slave(
-                        unique_id = node._64bit_addr, 
-                        # name = "Street Light "+str(counter),
-                        name = node.node_name,
-                        current = node.get_current_value(),
-                        temperature = node.get_temperature_value(),
-                        mains_val = node.get_mains_value(),
-                        dim_val = node.get_dim_value()
-                    )
-                    # node.set_node_id("Street Light "+str(counter))
-                    # counter+=1
-                    slave.save()
-                else:
-                    slave = Slave.objects.get(unique_id=node._64bit_addr)
+            try:
+                for node in MASTER.discover_nodes():
+                    try:
+                        if not Slave.objects.filter(unique_id = node._64bit_addr).exists():
+                            slave = Slave(
+                                unique_id = node._64bit_addr, 
+                                # name = "Street Light "+str(counter),
+                                name = node.node_name,
+                                current = node.get_current_value(),
+                                temperature = node.get_temperature_value(),
+                                mains_val = node.get_mains_value(),
+                                dim_val = node.get_dim_value()
+                            )
+                            # node.set_node_id("Street Light "+str(counter))
+                            # counter+=1
+                            slave.save()
+                        else:
+                            slave = Slave.objects.get(unique_id=node._64bit_addr)
 
-                    previous_mains_val = slave.mains_val
-                    previous_dim_val = slave.dim_val
-                    node.set_mains_value(previous_mains_val)
-                    node.set_dim_value(previous_dim_val)
+                            previous_mains_val = slave.mains_val
+                            previous_dim_val = slave.dim_val
+                            node.set_mains_value(previous_mains_val)
+                            node.set_dim_value(previous_dim_val)
+                    except Exception as e:
+                        print(f"Error while dealing with {node.node_name}",e,sep=" - ")
+            except Exception as e:
+                print(str(e),"Error while discovering nodes in startup")
             try:
                 current_schedule = Schedule.objects.get(currently_active = True)
                 
@@ -89,8 +97,15 @@ class NodeConfig(AppConfig):
 
             
 
-            fetchSunModel()
+            try:
+                fetchSunModel()
+            except Exception as e:
+                print("Error in function fetchSunModel",e,sep=" - ")
+
+
             updater_start()
+
+            
             if MASTER.Schedule is True:
                 sync_to_schedule(syncWithAutoInterval=True)
             
